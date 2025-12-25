@@ -30,7 +30,7 @@ export const MachineCodeView = ({
       </div>
 
       {/* Instructions List */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2">
+      <div className="flex-1 min-h-0 max-h-[400px] overflow-y-auto custom-scrollbar p-2">
         {instructions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Cpu className="h-12 w-12 mb-3 opacity-30" />
