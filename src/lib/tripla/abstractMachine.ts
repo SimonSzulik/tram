@@ -313,40 +313,64 @@ export class AbstractMachine {
 }
 
 // Parse instruction strings into MachineInstruction objects
-export function parseInstructions(instructionStrings: { code: string }[]): MachineInstruction[] {
+export function parseInstructions(instructionStrings: { code: string; label?: string }[]): MachineInstruction[] {
+  // First pass: build label-to-address map
+  const labelMap = new Map<string, number>();
+  instructionStrings.forEach((instr, idx) => {
+    if (instr.label) {
+      // Handle multiple labels separated by comma
+      const labels = instr.label.split(',');
+      labels.forEach(label => {
+        labelMap.set(label.trim(), idx);
+      });
+    }
+  });
+
+  const opcodeMap: Record<string, Opcode> = {
+    'CONST': Opcode.CONST,
+    'LOAD': Opcode.LOAD,
+    'STORE': Opcode.STORE,
+    'ADD': Opcode.ADD,
+    'SUB': Opcode.SUB,
+    'MUL': Opcode.MUL,
+    'DIV': Opcode.DIV,
+    'LT': Opcode.LT,
+    'GT': Opcode.GT,
+    'EQ': Opcode.EQ,
+    'NEQ': Opcode.NEQ,
+    'IFZERO': Opcode.IFZERO,
+    'GOTO': Opcode.GOTO,
+    'HALT': Opcode.HALT,
+    'NOP': Opcode.NOP,
+    'INVOKE': Opcode.INVOKE,
+    'RETURN': Opcode.RETURN,
+    'POP': Opcode.POP,
+  };
+
+  // Helper to resolve a value that might be a label or a number
+  const resolveValue = (val: string): number | undefined => {
+    if (!val) return undefined;
+    // Check if it's a label (starts with L)
+    if (val.startsWith('L') && labelMap.has(val)) {
+      return labelMap.get(val);
+    }
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) ? undefined : parsed;
+  };
+
+  // Second pass: parse instructions and resolve labels
   return instructionStrings.map((instr) => {
-    const code = instr.code.replace(/^[^:]+:\s*/, '').trim(); // Remove label prefix
+    const code = instr.code.trim();
     const parts = code.split(/\s+/);
     const opcodeName = parts[0];
-    
-    const opcodeMap: Record<string, Opcode> = {
-      'CONST': Opcode.CONST,
-      'LOAD': Opcode.LOAD,
-      'STORE': Opcode.STORE,
-      'ADD': Opcode.ADD,
-      'SUB': Opcode.SUB,
-      'MUL': Opcode.MUL,
-      'DIV': Opcode.DIV,
-      'LT': Opcode.LT,
-      'GT': Opcode.GT,
-      'EQ': Opcode.EQ,
-      'NEQ': Opcode.NEQ,
-      'IFZERO': Opcode.IFZERO,
-      'GOTO': Opcode.GOTO,
-      'HALT': Opcode.HALT,
-      'NOP': Opcode.NOP,
-      'INVOKE': Opcode.INVOKE,
-      'RETURN': Opcode.RETURN,
-      'POP': Opcode.POP,
-    };
     
     const opcode = opcodeMap[opcodeName] ?? Opcode.NOP;
     
     return {
       opcode,
-      arg1: parts[1] ? parseInt(parts[1], 10) : undefined,
-      arg2: parts[2] ? parseInt(parts[2], 10) : undefined,
-      arg3: parts[3] ? parseInt(parts[3], 10) : undefined,
+      arg1: resolveValue(parts[1]),
+      arg2: resolveValue(parts[2]),
+      arg3: resolveValue(parts[3]),
     };
   });
 }
