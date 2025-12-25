@@ -1,21 +1,35 @@
-import { Layers, ArrowUp, ArrowDown } from "lucide-react";
+import { Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface StackItem {
-  value: string | number;
-  isNew?: boolean;
-  isRemoving?: boolean;
+interface MachineState {
+  PC: number;
+  PP: number;
+  FP: number;
+  TOP: number;
+  stack: (number | null)[];
+  halted: boolean;
 }
 
 interface StackVisualizationProps {
-  stack: StackItem[];
+  machineState: MachineState;
   title?: string;
 }
 
 export const StackVisualization = ({
-  stack,
+  machineState,
   title = "Runtime Stack",
 }: StackVisualizationProps) => {
+  const { PC, PP, FP, TOP, stack, halted } = machineState;
+
+  // Get markers for each stack index
+  const getMarkers = (idx: number): string[] => {
+    const markers: string[] = [];
+    if (idx === PP) markers.push("PP");
+    if (idx === FP) markers.push("FP");
+    if (idx === TOP) markers.push("TOP");
+    return markers;
+  };
+
   return (
     <div className="panel-card h-full flex flex-col">
       {/* Header */}
@@ -27,20 +41,33 @@ export const StackVisualization = ({
         </span>
       </div>
 
-      {/* Stack Legend */}
-      <div className="flex items-center gap-4 px-4 py-2 border-b border-border/50 bg-muted/20">
-        <div className="flex items-center gap-1.5 text-xs">
-          <ArrowUp className="h-3 w-3 text-stack-push" />
-          <span className="text-muted-foreground">Push</span>
+      {/* Register Display */}
+      <div className="grid grid-cols-4 gap-2 px-4 py-3 border-b border-border/50 bg-muted/20">
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">PC</span>
+          <span className={cn(
+            "font-mono text-sm font-bold",
+            halted ? "text-destructive" : "text-primary"
+          )}>
+            {halted ? "—" : PC}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs">
-          <ArrowDown className="h-3 w-3 text-stack-pop" />
-          <span className="text-muted-foreground">Pop</span>
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">PP</span>
+          <span className="font-mono text-sm font-bold text-foreground">{PP}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">FP</span>
+          <span className="font-mono text-sm font-bold text-foreground">{FP}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">TOP</span>
+          <span className="font-mono text-sm font-bold text-foreground">{TOP}</span>
         </div>
       </div>
 
       {/* Stack Visualization */}
-      <div className="flex-1 overflow-auto custom-scrollbar p-4 flex flex-col-reverse">
+      <div className="flex-1 overflow-auto custom-scrollbar p-4">
         {stack.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Layers className="h-12 w-12 mb-3 opacity-30" />
@@ -48,22 +75,52 @@ export const StackVisualization = ({
             <p className="text-xs mt-1">Execute instructions to see stack operations</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {stack.map((item, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "stack-item flex items-center justify-between font-mono text-sm",
-                  item.isNew && "animate-stack-push border-l-4 border-stack-push",
-                  item.isRemoving && "animate-stack-pop border-l-4 border-stack-pop"
-                )}
-              >
-                <span className="text-xs text-muted-foreground">
-                  [{stack.length - 1 - idx}]
-                </span>
-                <span className="font-semibold">{item.value}</span>
-              </div>
-            ))}
+          <div className="space-y-1">
+            {/* Render stack from TOP to bottom */}
+            {[...stack].reverse().map((value, reversedIdx) => {
+              const idx = stack.length - 1 - reversedIdx;
+              const markers = getMarkers(idx);
+              const isTop = idx === TOP;
+              const isFP = idx === FP;
+              const isPP = idx === PP;
+
+              return (
+                <div
+                  key={idx}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-md font-mono text-sm transition-all",
+                    "bg-editor border border-border/50",
+                    isTop && "border-l-4 border-l-primary bg-primary/5",
+                    isFP && !isTop && "border-l-4 border-l-amber-500 bg-amber-500/5",
+                    isPP && !isTop && !isFP && "border-l-4 border-l-cyan-500 bg-cyan-500/5"
+                  )}
+                >
+                  <span className="text-xs text-muted-foreground w-8 text-right">
+                    [{idx}]
+                  </span>
+                  <span className="flex-1 font-semibold text-foreground">
+                    {value ?? "_"}
+                  </span>
+                  {markers.length > 0 && (
+                    <div className="flex gap-1">
+                      {markers.map((marker) => (
+                        <span
+                          key={marker}
+                          className={cn(
+                            "px-1.5 py-0.5 text-[10px] font-bold rounded",
+                            marker === "TOP" && "bg-primary/20 text-primary",
+                            marker === "FP" && "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+                            marker === "PP" && "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                          )}
+                        >
+                          {marker}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
