@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { FileCode } from "lucide-react";
 
 interface CodeEditorProps {
@@ -9,6 +9,14 @@ interface CodeEditorProps {
 
 export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEditorProps) => {
   const lines = value.split("\n");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
 
   return (
     <div className="panel-card h-full flex flex-col">
@@ -25,7 +33,10 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       <div className="flex-1 overflow-hidden bg-editor rounded-b-xl">
         <div className="flex h-full">
           {/* Line Numbers */}
-          <div className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30">
+          <div 
+            ref={lineNumbersRef}
+            className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30 overflow-hidden"
+          >
             {lines.map((_, idx) => (
               <div
                 key={idx}
@@ -38,11 +49,13 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
           </div>
 
           {/* Code Input */}
-          <div className="flex-1 relative overflow-auto custom-scrollbar">
+          <div className="flex-1 relative overflow-hidden">
             <textarea
+              ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              className="absolute inset-0 w-full h-full py-4 px-2 font-mono text-sm text-editor-foreground bg-transparent resize-none focus:outline-none leading-6 caret-execution"
+              onScroll={handleScroll}
+              className="absolute inset-0 w-full h-full py-4 px-2 font-mono text-sm text-editor-foreground bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-auto custom-scrollbar"
               spellCheck={false}
               placeholder="// Write your Tripla code here..."
             />
