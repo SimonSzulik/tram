@@ -28,7 +28,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
   }, []);
 
   return (
-    <div className="panel-card h-full flex flex-col">
+    <div className="panel-card flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <FileCode className="h-4 w-4 text-primary" />
@@ -39,10 +39,10 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       </div>
 
       {/* Editor Area */}
-      <div 
+      <div
         ref={containerRef}
         onScroll={handleContainerScroll}
-        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
+        className="h-[520px] overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
       >
         <div className="flex min-h-full">
           {/* Line Numbers */}
@@ -60,21 +60,21 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
 
           {/* Code Area with syntax highlighting overlay */}
           <div className="flex-1 relative min-h-full">
-            {/* Syntax highlighted layer (visible, no pointer events) */}
-            <div 
-              className="absolute inset-0 py-4 px-2 font-mono text-sm leading-6 whitespace-pre pointer-events-none overflow-hidden"
+            {/* Syntax highlighted layer (drives layout height) */}
+            <div
+              className="py-4 px-2 font-mono text-sm leading-6 whitespace-pre-wrap break-words pointer-events-none"
               aria-hidden="true"
             >
               <SyntaxHighlighter code={value} />
             </div>
-            
+
             {/* Actual textarea (transparent text, captures input) */}
             <textarea
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onScroll={handleTextareaScroll}
-              className="relative w-full h-full min-h-full py-4 px-2 font-mono text-sm text-transparent bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
+              className="absolute inset-0 w-full h-full py-4 px-2 font-mono text-sm leading-6 whitespace-pre-wrap break-words text-transparent bg-transparent resize-none focus:outline-none caret-execution overflow-hidden"
               spellCheck={false}
               placeholder=""
               style={{ caretColor: "hsl(var(--execution-current))" }}

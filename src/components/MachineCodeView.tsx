@@ -44,7 +44,7 @@ export const MachineCodeView = ({
   }, [currentLine, instructions.length]);
 
   return (
-    <div className="panel-card h-full flex flex-col">
+    <div className="panel-card flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <Cpu className="h-4 w-4 text-primary" />
@@ -55,9 +55,9 @@ export const MachineCodeView = ({
       </div>
 
       {/* Instructions List */}
-      <div 
+      <div
         ref={containerRef}
-        className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar p-2"
+        className="h-[520px] overflow-y-auto custom-scrollbar p-2"
       >
         {instructions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">

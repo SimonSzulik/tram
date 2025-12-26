@@ -16,23 +16,39 @@ const OPERATORS = ['+', '-', '*', '/', '>', '<', '>=', '<=', '&&', '||', '==', '
 const PUNCTUATION = ['{', '}', '(', ')', ',', ';'];
 
 export const SyntaxHighlighter = ({ code }: SyntaxHighlighterProps) => {
-  const highlightedLines = useMemo(() => {
-    return code.split('\n').map((line, lineIdx) => {
-      const tokens = tokenizeLine(line);
-      return (
-        <div key={lineIdx} className="leading-6">
-          {tokens.map((token, tokenIdx) => (
-            <span key={tokenIdx} className={getTokenClass(token.style)}>
-              {token.text}
-            </span>
-          ))}
-          {tokens.length === 0 && '\u00A0'}
-        </div>
-      );
-    });
+  const highlighted = useMemo(() => {
+    const lines = code.split("\n");
+    const out: HighlightToken[] = [];
+
+    for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+      const line = lines[lineIdx];
+      const lineTokens = tokenizeLine(line);
+
+      if (lineTokens.length === 0) {
+        // Preserve empty lines so vertical alignment matches the textarea
+        out.push({ text: "\u00A0", style: "text" });
+      } else {
+        out.push(...lineTokens);
+      }
+
+      // Re-add newline between lines (rendered via whitespace-pre-wrap)
+      if (lineIdx < lines.length - 1) {
+        out.push({ text: "\n", style: "text" });
+      }
+    }
+
+    return out;
   }, [code]);
 
-  return <>{highlightedLines}</>;
+  return (
+    <>
+      {highlighted.map((token, idx) => (
+        <span key={idx} className={getTokenClass(token.style)}>
+          {token.text}
+        </span>
+      ))}
+    </>
+  );
 };
 
 function tokenizeLine(line: string): HighlightToken[] {
