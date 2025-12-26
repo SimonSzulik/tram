@@ -28,7 +28,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
   }, []);
 
   return (
-    <div className="panel-card flex flex-col">
+    <div className="panel-card flex flex-col h-[600px]">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <FileCode className="h-4 w-4 text-primary" />
@@ -42,7 +42,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       <div
         ref={containerRef}
         onScroll={handleContainerScroll}
-        className="h-[520px] overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
+        className="flex-1 overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
       >
         <div className="flex min-h-full">
           {/* Line Numbers */}

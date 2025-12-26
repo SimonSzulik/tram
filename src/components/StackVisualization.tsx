@@ -31,7 +31,7 @@ export const StackVisualization = ({
   };
 
   return (
-    <div className="panel-card flex flex-col">
+    <div className="panel-card flex flex-col h-[600px]">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <Layers className="h-4 w-4 text-primary" />
@@ -69,7 +69,7 @@ export const StackVisualization = ({
       </div>
 
       {/* Stack Visualization */}
-      <div className="h-[520px] overflow-y-auto custom-scrollbar p-4">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
         {stack.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Layers className="h-12 w-12 mb-3 opacity-30" />
