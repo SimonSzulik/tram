@@ -3,9 +3,9 @@ import { Code2, BookOpen, Layers, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/", label: "Workspace", icon: Play },
-  { to: "/learn", label: "Learn Tripla", icon: BookOpen },
-  { to: "/compiler", label: "Compiler Concepts", icon: Layers },
+  { to: "/", label: "Workspace", icon: Play, disabled: false },
+  { to: "/learn", label: "Learn Tripla", icon: BookOpen, disabled: true },
+  { to: "/compiler", label: "Compiler Concepts", icon: Layers, disabled: true },
 ];
 
 export const Header = () => {
@@ -34,6 +34,19 @@ export const Header = () => {
           {navItems.map((item) => {
             const isActive = location.pathname === item.to;
             const Icon = item.icon;
+            
+            if (item.disabled) {
+              return (
+                <span
+                  key={item.to}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground/50 cursor-not-allowed"
+                  title="Coming soon"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{item.label}</span>
+                </span>
+              );
+            }
             
             return (
               <Link
