@@ -67,7 +67,7 @@ export const StackVisualization = ({
       </div>
 
       {/* Stack Visualization */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4">
+      <div className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar p-4">
         {stack.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Layers className="h-12 w-12 mb-3 opacity-30" />
