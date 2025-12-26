@@ -79,6 +79,14 @@ export default {
           item: "hsl(var(--stack-item))",
           "item-bg": "hsl(var(--stack-item-bg))",
         },
+        syntax: {
+          keyword: "hsl(var(--syntax-keyword))",
+          number: "hsl(var(--syntax-number))",
+          boolean: "hsl(var(--syntax-boolean))",
+          operator: "hsl(var(--syntax-operator))",
+          comment: "hsl(var(--syntax-comment))",
+          punctuation: "hsl(var(--syntax-punctuation))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
