@@ -1,5 +1,6 @@
 import { useRef, useCallback } from "react";
 import { FileCode } from "lucide-react";
+import { SyntaxHighlighter } from "./SyntaxHighlighter";
 
 interface CodeEditorProps {
   value: string;
@@ -10,7 +11,6 @@ interface CodeEditorProps {
 export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEditorProps) => {
   const lines = value.split("\n");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mirrorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync textarea scroll with the container
@@ -46,7 +46,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       >
         <div className="flex min-h-full">
           {/* Line Numbers */}
-          <div className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30 sticky left-0">
+          <div className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30">
             {lines.map((_, idx) => (
               <div
                 key={idx}
@@ -58,26 +58,26 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
             ))}
           </div>
 
-          {/* Code Mirror (for sizing) + Textarea overlay */}
+          {/* Code Area with syntax highlighting overlay */}
           <div className="flex-1 relative">
-            {/* Invisible mirror to set correct height */}
+            {/* Syntax highlighted layer (visible, no pointer events) */}
             <div 
-              ref={mirrorRef}
-              className="py-4 px-2 font-mono text-sm leading-6 whitespace-pre-wrap break-all invisible"
+              className="absolute inset-0 py-4 px-2 font-mono text-sm leading-6 whitespace-pre pointer-events-none overflow-hidden"
               aria-hidden="true"
             >
-              {value || " "}
+              <SyntaxHighlighter code={value} />
             </div>
             
-            {/* Actual textarea */}
+            {/* Actual textarea (transparent text, captures input) */}
             <textarea
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onScroll={handleTextareaScroll}
-              className="absolute inset-0 w-full h-full py-4 px-2 font-mono text-sm text-editor-foreground bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
+              className="relative w-full h-full min-h-[200px] py-4 px-2 font-mono text-sm text-transparent bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
               spellCheck={false}
-              placeholder="// Write your Tripla code here..."
+              placeholder=""
+              style={{ caretColor: "hsl(var(--execution-current))" }}
             />
           </div>
         </div>
