@@ -50,7 +50,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
             {lines.map((_, idx) => (
               <div
                 key={idx}
-                className="font-mono text-xs text-editor-line leading-6 text-right pr-2"
+                className="font-mono text-sm text-editor-line leading-6 text-right pr-2"
                 style={{ minWidth: "2.5rem" }}
               >
                 {idx + 1}
