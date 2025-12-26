@@ -67,7 +67,7 @@ export const StackVisualization = ({
       </div>
 
       {/* Stack Visualization */}
-      <div className="flex-1 overflow-auto custom-scrollbar p-4">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4">
         {stack.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Layers className="h-12 w-12 mb-3 opacity-30" />
@@ -83,16 +83,19 @@ export const StackVisualization = ({
               const isTop = idx === TOP;
               const isFP = idx === FP;
               const isPP = idx === PP;
+              const hasMarker = isTop || isFP || isPP;
 
               return (
                 <div
                   key={idx}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md font-mono text-sm transition-all",
-                    "bg-editor border border-border/50",
-                    isTop && "border-l-4 border-l-primary bg-primary/5",
-                    isFP && !isTop && "border-l-4 border-l-amber-500 bg-amber-500/5",
-                    isPP && !isTop && !isFP && "border-l-4 border-l-cyan-500 bg-cyan-500/5"
+                    "flex items-center gap-2 px-3 py-2 rounded-md font-mono text-sm transition-all border",
+                    // Default: light background for unmarked items
+                    !hasMarker && "bg-muted/40 border-border/30",
+                    // Highlighted states for marked items
+                    isTop && "border-l-4 border-l-primary bg-primary/10 border-primary/30",
+                    isFP && !isTop && "border-l-4 border-l-amber-500 bg-amber-500/10 border-amber-500/30",
+                    isPP && !isTop && !isFP && "border-l-4 border-l-cyan-500 bg-cyan-500/10 border-cyan-500/30"
                   )}
                 >
                   <span className="text-xs text-muted-foreground w-8 text-right">
