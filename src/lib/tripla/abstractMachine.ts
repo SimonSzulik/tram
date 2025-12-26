@@ -65,12 +65,17 @@ export class AbstractMachine {
   }
 
   getState(): MachineState {
+    // Only show stack up to TOP, and ensure all values are numbers (not null)
+    const visibleStack: (number | null)[] = [];
+    for (let i = 0; i <= this.TOP; i++) {
+      visibleStack.push(this.STACK[i] ?? 0);
+    }
     return {
       PC: this.PC,
       PP: this.PP,
       FP: this.FP,
       TOP: this.TOP,
-      stack: this.STACK.slice(0, Math.max(this.TOP + 1, 0)),
+      stack: visibleStack,
       halted: this.PC < 0 || this.PC >= this.program.length,
     };
   }
