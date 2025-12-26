@@ -98,8 +98,8 @@ export const StackVisualization = ({
                   <span className="text-xs text-muted-foreground w-8 text-right">
                     [{idx}]
                   </span>
-                  <span className="flex-1 font-semibold text-foreground">
-                    {value ?? "_"}
+                  <span className="flex-1 font-semibold text-foreground tabular-nums">
+                    {value !== null && value !== undefined ? value : 0}
                   </span>
                   {markers.length > 0 && (
                     <div className="flex gap-1">
