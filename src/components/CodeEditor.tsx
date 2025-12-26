@@ -42,7 +42,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       <div 
         ref={containerRef}
         onScroll={handleContainerScroll}
-        className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
+        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
       >
         <div className="flex min-h-full">
           {/* Line Numbers */}
@@ -59,7 +59,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
           </div>
 
           {/* Code Area with syntax highlighting overlay */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-h-full">
             {/* Syntax highlighted layer (visible, no pointer events) */}
             <div 
               className="absolute inset-0 py-4 px-2 font-mono text-sm leading-6 whitespace-pre pointer-events-none overflow-hidden"
@@ -74,7 +74,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
               value={value}
               onChange={(e) => onChange(e.target.value)}
               onScroll={handleTextareaScroll}
-              className="relative w-full h-full min-h-[200px] py-4 px-2 font-mono text-sm text-transparent bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
+              className="relative w-full h-full min-h-full py-4 px-2 font-mono text-sm text-transparent bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
               spellCheck={false}
               placeholder=""
               style={{ caretColor: "hsl(var(--execution-current))" }}
