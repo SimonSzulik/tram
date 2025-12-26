@@ -1,24 +1,28 @@
-import { Play, StepForward, RotateCcw, Zap, Pause } from "lucide-react";
+import { Play, StepForward, StepBack, RotateCcw, Zap, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CompilerControlsProps {
   onCompile: () => void;
   onStep: () => void;
+  onStepBack: () => void;
   onRun: () => void;
   onReset: () => void;
   isCompiled: boolean;
   isRunning: boolean;
   canStep: boolean;
+  canStepBack: boolean;
 }
 
 export const CompilerControls = ({
   onCompile,
   onStep,
+  onStepBack,
   onRun,
   onReset,
   isCompiled,
   isRunning,
   canStep,
+  canStepBack,
 }: CompilerControlsProps) => {
   return (
     <div className="flex items-center gap-2 p-4 bg-card border-t border-border">
@@ -32,6 +36,17 @@ export const CompilerControls = ({
         >
           <Zap className="h-4 w-4" />
           Compile
+        </Button>
+
+        <Button
+          onClick={onStepBack}
+          variant="outline"
+          size="lg"
+          disabled={!isCompiled || !canStepBack}
+          className="gap-2"
+        >
+          <StepBack className="h-4 w-4" />
+          Back
         </Button>
 
         <Button
