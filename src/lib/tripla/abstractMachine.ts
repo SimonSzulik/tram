@@ -64,6 +64,18 @@ export class AbstractMachine {
     this.TOP = -1;
   }
 
+  restoreState(state: MachineState): void {
+    this.PC = state.PC;
+    this.PP = state.PP;
+    this.FP = state.FP;
+    this.TOP = state.TOP;
+    // Restore stack
+    this.STACK = new Array(Math.max(DEFAULT_STACK_SIZE, state.stack.length)).fill(null);
+    for (let i = 0; i < state.stack.length; i++) {
+      this.STACK[i] = state.stack[i];
+    }
+  }
+
   getState(): MachineState {
     // Only show stack up to TOP, and ensure all values are numbers (not null)
     const visibleStack: (number | null)[] = [];
