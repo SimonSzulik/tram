@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { 
   Layers, 
   ArrowRight, 
   Cpu, 
-  Database, 
   Cog, 
   Code2, 
   FileCode,
@@ -15,14 +14,14 @@ import {
   Lightbulb,
   CheckCircle,
   Sparkles,
-  TrendingUp,
-  Network,
   Box,
   Target,
   Eye,
-  Settings,
   FileText,
-  Terminal
+  Terminal,
+  Search,
+  Settings,
+  Binary
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,183 +29,357 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-const pipelineStages = [
+// Frontend phases
+const frontendPhases = [
   {
-    icon: FileCode,
-    title: "Source Code",
-    description: "High-level Tripla code written by the programmer",
-    example: "let add(x, y) { x + y } in add(5, 3)",
-    color: "bg-primary",
-    delay: "0s",
-  },
-  {
-    icon: Cog,
-    title: "Lexical Analysis",
-    description: "Breaks source code into tokens (keywords, identifiers, operators, literals)",
-    example: "[let] [add] [(] [x] [,] [y] [)] [{] [x] [+] [y] [}] [in] [add] [(] [5] [,] [3] [)]",
-    color: "bg-execution",
-    delay: "0.1s",
-  },
-  {
-    icon: GitBranch,
-    title: "Syntax Analysis",
-    description: "Builds an Abstract Syntax Tree (AST) from tokens using grammar rules",
-    example: "FunctionDecl → FunctionCall → BinaryOp → ...",
-    color: "bg-stack-push",
-    delay: "0.2s",
-  },
-  {
-    icon: Database,
-    title: "Semantic Analysis",
-    description: "Validates program semantics, checks types, builds symbol tables",
-    example: "Type checking, scope resolution, symbol binding",
+    id: "scanner",
+    icon: Search,
+    title: "Scanner",
+    subtitle: "Lexical Analysis",
+    description: "Reads source code character by character and groups them into tokens (lexemes). Identifies keywords, identifiers, operators, and literals.",
+    example: {
+      input: 'let add(x, y) { x + y }',
+      output: ['let', 'add', '(', 'x', ',', 'y', ')', '{', 'x', '+', 'y', '}']
+    },
     color: "bg-blue-500",
-    delay: "0.3s",
+    details: [
+      "Removes whitespace and comments",
+      "Recognizes language keywords",
+      "Identifies numeric and string literals",
+      "Generates token stream for parser"
+    ]
   },
   {
-    icon: Cpu,
-    title: "Code Generation",
-    description: "Generates TRAM machine code from the validated AST",
-    example: "CONST 5; CONST 3; ADD; RETURN",
-    color: "bg-purple-500",
-    delay: "0.4s",
+    id: "parser",
+    icon: GitBranch,
+    title: "Parser",
+    subtitle: "Syntactic Analysis",
+    description: "Analyzes token stream according to grammar rules and builds an Abstract Syntax Tree (AST) representing the program structure.",
+    example: {
+      input: "Token stream from scanner",
+      output: "FunctionDecl(add) → BinaryOp(+) → [Var(x), Var(y)]"
+    },
+    color: "bg-cyan-500",
+    details: [
+      "Validates grammar rules (context-free grammar)",
+      "Builds hierarchical AST structure",
+      "Reports syntax errors with location",
+      "Handles operator precedence"
+    ]
   },
   {
-    icon: Play,
-    title: "Execution",
-    description: "TRAM virtual machine executes the generated machine code",
-    example: "Stack operations, register updates, control flow",
-    color: "bg-green-500",
-    delay: "0.5s",
-  },
+    id: "semantic",
+    icon: Eye,
+    title: "Semantic Analysis",
+    subtitle: "Meaning Validation",
+    description: "Checks that the program makes semantic sense: validates types, resolves identifiers, and builds symbol tables.",
+    example: {
+      input: "AST from parser",
+      output: "Type-annotated AST + Symbol Table"
+    },
+    color: "bg-indigo-500",
+    details: [
+      "Type checking and inference",
+      "Scope and binding resolution",
+      "Symbol table construction",
+      "Semantic error detection"
+    ]
+  }
 ];
 
-const compilerPhases = [
+// Backend phases
+const backendPhases = [
   {
-    name: "Frontend",
-    phases: ["Lexical Analysis", "Syntax Analysis", "Semantic Analysis"],
-    color: "from-blue-500/20 to-cyan-500/20",
-    borderColor: "border-blue-500/30",
+    id: "intermediate",
+    icon: Layers,
+    title: "Intermediate Code",
+    subtitle: "IR Generation",
+    description: "Transforms the AST into an intermediate representation (IR) that is machine-independent and easier to optimize.",
+    example: {
+      input: "Annotated AST",
+      output: "Three-address code or SSA form"
+    },
+    color: "bg-purple-500",
+    details: [
+      "Machine-independent representation",
+      "Facilitates optimization passes",
+      "Abstracts target architecture",
+      "Enables portability"
+    ]
   },
   {
-    name: "Backend",
-    phases: ["Code Generation", "Optimization", "Code Emission"],
-    color: "from-purple-500/20 to-pink-500/20",
-    borderColor: "border-purple-500/30",
+    id: "optimization",
+    icon: Zap,
+    title: "Optimization",
+    subtitle: "Code Improvement",
+    description: "Applies transformations to improve code efficiency: constant folding, dead code elimination, loop optimization.",
+    example: {
+      input: "CONST 3; CONST 5; ADD",
+      output: "CONST 8"
+    },
+    color: "bg-pink-500",
+    details: [
+      "Constant folding and propagation",
+      "Dead code elimination",
+      "Loop unrolling and optimization",
+      "Register allocation"
+    ]
   },
+  {
+    id: "codegen",
+    icon: Binary,
+    title: "Code Generation",
+    subtitle: "Target Code",
+    description: "Produces the final target code (TRAM instructions) that can be executed by the virtual machine or hardware.",
+    example: {
+      input: "Optimized IR",
+      output: "CONST 5; CONST 3; ADD; RETURN"
+    },
+    color: "bg-orange-500",
+    details: [
+      "Instruction selection",
+      "Register assignment",
+      "Address calculation",
+      "Executable output generation"
+    ]
+  }
 ];
+
+const CompilerPhaseDiagram = () => {
+  const [hoveredPhase, setHoveredPhase] = useState<string | null>(null);
+  const [animationStep, setAnimationStep] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAnimationStep(prev => (prev + 1) % 7);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const PhaseBox = ({ 
+    phase, 
+    index, 
+    total,
+    showArrow = true 
+  }: { 
+    phase: typeof frontendPhases[0]; 
+    index: number;
+    total: number;
+    showArrow?: boolean;
+  }) => {
+    const Icon = phase.icon;
+    const isActive = animationStep === index || hoveredPhase === phase.id;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <div
+          className={`
+            relative p-4 rounded-xl border-2 transition-all duration-500 cursor-pointer
+            ${isActive 
+              ? `${phase.color} text-white border-transparent shadow-lg scale-105` 
+              : 'bg-card border-border hover:border-primary/50'
+            }
+          `}
+          onMouseEnter={() => setHoveredPhase(phase.id)}
+          onMouseLeave={() => setHoveredPhase(null)}
+        >
+          <div className="flex flex-col items-center gap-2 min-w-[100px]">
+            <Icon className={`h-6 w-6 ${isActive ? 'text-white' : 'text-primary'}`} />
+            <span className={`text-sm font-semibold text-center ${isActive ? 'text-white' : 'text-foreground'}`}>
+              {phase.title}
+            </span>
+          </div>
+          {isActive && (
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-inherit" />
+          )}
+        </div>
+        {showArrow && index < total - 1 && (
+          <ArrowRight className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
+            animationStep === index ? 'text-primary animate-bounce-horizontal' : 'text-muted-foreground'
+          }`} />
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Main Compiler Flow */}
+      <div className="relative p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-background to-purple-500/5 border border-border">
+        {/* Source and Target */}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 mb-8">
+          {/* Source Program */}
+          <div className="flex items-center gap-4">
+            <div className="p-4 rounded-xl bg-stack-push/20 border-2 border-stack-push text-stack-push">
+              <div className="flex flex-col items-center gap-2">
+                <FileCode className="h-8 w-8" />
+                <span className="font-bold">Source</span>
+                <span className="text-xs opacity-80">Tripla Code</span>
+              </div>
+            </div>
+            <ArrowRight className="h-6 w-6 text-muted-foreground" />
+          </div>
+
+          {/* Compiler Box */}
+          <div className="flex-1 max-w-4xl">
+            <div className="relative p-6 rounded-2xl bg-primary/10 border-2 border-primary/30">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                Compiler
+              </div>
+              
+              {/* Frontend Section */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-0.5 flex-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
+                  <span className="text-sm font-semibold text-muted-foreground px-3 py-1 rounded-full bg-blue-500/10">
+                    Frontend
+                  </span>
+                  <div className="h-0.5 flex-1 bg-gradient-to-r from-cyan-500 to-indigo-500" />
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {frontendPhases.map((phase, idx) => (
+                    <PhaseBox 
+                      key={phase.id} 
+                      phase={phase} 
+                      index={idx} 
+                      total={frontendPhases.length}
+                      showArrow={idx < frontendPhases.length - 1}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Divider Arrow */}
+              <div className="flex justify-center my-4">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-0.5 h-4 bg-gradient-to-b from-indigo-500 to-purple-500" />
+                  <ArrowRight className="h-5 w-5 text-purple-500 rotate-90" />
+                </div>
+              </div>
+
+              {/* Backend Section */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-0.5 flex-1 bg-gradient-to-r from-purple-500 to-pink-500" />
+                  <span className="text-sm font-semibold text-muted-foreground px-3 py-1 rounded-full bg-purple-500/10">
+                    Backend
+                  </span>
+                  <div className="h-0.5 flex-1 bg-gradient-to-r from-pink-500 to-orange-500" />
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {backendPhases.map((phase, idx) => (
+                    <PhaseBox 
+                      key={phase.id} 
+                      phase={phase} 
+                      index={idx + 3} 
+                      total={backendPhases.length}
+                      showArrow={idx < backendPhases.length - 1}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Target Program */}
+          <div className="flex items-center gap-4">
+            <ArrowRight className="h-6 w-6 text-muted-foreground" />
+            <div className="p-4 rounded-xl bg-execution/20 border-2 border-execution text-execution">
+              <div className="flex flex-col items-center gap-2">
+                <Cpu className="h-8 w-8" />
+                <span className="font-bold">Target</span>
+                <span className="text-xs opacity-80">TRAM Code</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Phase Details (shown on hover) */}
+        {hoveredPhase && (
+          <div className="mt-4 p-4 rounded-xl bg-card border border-border animate-fade-in">
+            {[...frontendPhases, ...backendPhases].filter(p => p.id === hoveredPhase).map(phase => (
+              <div key={phase.id} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${phase.color} text-white`}>
+                    <phase.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-foreground">{phase.title}</h4>
+                    <p className="text-sm text-muted-foreground">{phase.subtitle}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">{phase.description}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {phase.details.map((detail, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CheckCircle className="h-3 w-3 text-stack-push flex-shrink-0" />
+                      <span>{detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Compiler = () => {
-  const [activeStage, setActiveStage] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeTab, setActiveTab] = useState("lexical");
 
   useEffect(() => {
     setIsVisible(true);
-    
-    // Create particles for animation
-    const newParticles = Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 3,
-    }));
-    setParticles(newParticles);
-
-    // Intersection Observer for scroll animations
-    const observers = sectionRefs.current.map((ref, index) => {
-      if (!ref) return null;
-      
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("animate-slide-in");
-            }
-          });
-        },
-        { threshold: 0.1 }
-      );
-      
-      observer.observe(ref);
-      return observer;
-    });
-
-    return () => {
-      observers.forEach((obs) => obs?.disconnect());
-    };
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {particles.map((particle) => (
-          <div
-            key={particle.id}
-            className="absolute w-1 h-1 bg-primary/20 rounded-full animate-float"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              animationDelay: `${particle.delay}s`,
-              animationDuration: `${3 + Math.random() * 2}s`,
-            }}
-          />
-        ))}
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/3 rounded-full blur-3xl" />
       </div>
 
       <Header />
 
       <main className="flex-1 container py-8 relative z-10">
-        {/* Hero Section with Animation */}
+        {/* Hero Section */}
         <section className={`mb-12 text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Sparkles className="h-4 w-4 animate-spin-slow" />
             <span className="text-sm font-medium">Compiler Design Fundamentals</span>
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
             <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
               Compiler Concepts
             </span>
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            Explore the fascinating world of compiler design. Learn how high-level programming languages 
-            are transformed into executable machine code through a series of sophisticated transformations.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-6">
+            Understand how high-level source code is transformed into executable machine code 
+            through a series of sophisticated analysis and synthesis phases.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-              <Code2 className="h-3 w-3 mr-1.5" />
-              Lexical Analysis
-            </Badge>
-            <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-              <GitBranch className="h-3 w-3 mr-1.5" />
-              Parsing
-            </Badge>
-            <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-              <Cpu className="h-3 w-3 mr-1.5" />
-              Code Generation
-            </Badge>
-            <Badge variant="secondary" className="px-4 py-1.5 text-sm">
-              <Database className="h-3 w-3 mr-1.5" />
-              Optimization
-            </Badge>
+          <div className="flex flex-wrap justify-center gap-2">
+            {["Scanner", "Parser", "Semantic Analysis", "Code Generation"].map((phase, idx) => (
+              <Badge key={idx} variant="secondary" className="px-3 py-1.5">
+                {phase}
+              </Badge>
+            ))}
           </div>
         </section>
 
-        {/* What is a Compiler - Animated Card */}
-        <section 
-          ref={(el) => (sectionRefs.current[0] = el)}
-          className="mb-12 scroll-mt-20"
-        >
-          <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-xl">
+        {/* What is a Compiler */}
+        <section className="mb-12">
+          <Card className="overflow-hidden border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 pointer-events-none" />
             <CardHeader className="relative">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 rounded-xl bg-primary/10 animate-pulse-slow">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-primary/10">
                   <Lightbulb className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -218,20 +391,21 @@ const Compiler = () => {
               </div>
             </CardHeader>
             <CardContent className="relative space-y-4">
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                A <strong className="text-foreground">compiler</strong> is a sophisticated program that translates 
-                source code written in a high-level programming language (like Tripla) into a lower-level representation 
-                (like TRAM machine code) that can be executed by a computer or virtual machine.
+              <p className="text-muted-foreground leading-relaxed">
+                A <strong className="text-foreground">compiler</strong> is a program that translates 
+                source code written in a high-level programming language into a lower-level representation 
+                that can be executed by a computer or virtual machine. Unlike an interpreter (which executes 
+                code line by line), a compiler processes the entire program and produces an executable output.
               </p>
               
-              <div className="grid md:grid-cols-2 gap-4 mt-6">
+              <div className="grid md:grid-cols-3 gap-4 mt-6">
                 <div className="p-4 rounded-lg bg-muted/50 border border-border hover:scale-105 transition-transform duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="h-5 w-5 text-primary" />
                     <h4 className="font-semibold">Translation</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Converts high-level abstractions into low-level instructions while preserving program semantics.
+                    Converts high-level abstractions into low-level instructions.
                   </p>
                 </div>
                 
@@ -241,203 +415,110 @@ const Compiler = () => {
                     <h4 className="font-semibold">Analysis</h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Analyzes code structure, validates syntax, checks types, and builds internal representations.
+                    Validates syntax, checks types, and builds internal representations.
                   </p>
                 </div>
-              </div>
 
-              <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold mb-1">Key Insight</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Compilers are essentially <strong>translators</strong> that understand both the source language 
-                      (syntax and semantics) and the target language (machine code), performing complex transformations 
-                      to bridge the gap between human intent and machine execution.
-                    </p>
+                <div className="p-4 rounded-lg bg-muted/50 border border-border hover:scale-105 transition-transform duration-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Settings className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Optimization</h4>
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    Improves code efficiency while preserving semantics.
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </section>
 
-        {/* Compilation Pipeline - Interactive */}
-        <section 
-          ref={(el) => (sectionRefs.current[1] = el)}
-          className="mb-12 scroll-mt-20"
-        >
+        {/* Interactive Compiler Structure Diagram */}
+        <section className="mb-12">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">The Compilation Pipeline</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-2">Compiler Structure</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Follow the journey of your code from source text to executable instructions
+              Hover over each phase to learn more about its role in the compilation process
             </p>
           </div>
 
-          <div className="relative">
-            {/* Animated Connection Lines */}
-            <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-purple-500 to-green-500 transform -translate-x-1/2 opacity-30 animate-pulse-slow" 
-                 style={{ height: 'calc(100% - 4rem)', top: '2rem' }} />
-
-            <div className="space-y-6">
-              {pipelineStages.map((stage, idx) => {
-                const Icon = stage.icon;
-                const isActive = activeStage === idx;
-                
-                return (
-                  <div
-                    key={idx}
-                    className={`relative group cursor-pointer transition-all duration-500 ${
-                      isActive ? 'scale-105 z-10' : 'hover:scale-102'
-                    }`}
-                    onMouseEnter={() => setActiveStage(idx)}
-                    onMouseLeave={() => setActiveStage(null)}
-                    style={{ animationDelay: stage.delay }}
-                  >
-                    <Card className={`overflow-hidden border-2 transition-all duration-300 ${
-                      isActive 
-                        ? 'border-primary shadow-2xl shadow-primary/20' 
-                        : 'border-border hover:border-primary/50 hover:shadow-lg'
-                    }`}>
-                      <div className={`absolute inset-0 bg-gradient-to-r ${stage.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                      
-                      <CardContent className="relative p-6">
-                        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-                          {/* Icon */}
-                          <div className={`p-4 rounded-2xl ${stage.color} text-white shadow-lg transform transition-all duration-300 ${
-                            isActive ? 'scale-110 rotate-6' : 'group-hover:scale-105 group-hover:rotate-3'
-                          }`}>
-                            <Icon className="h-8 w-8" />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <Badge variant="outline" className="font-mono">
-                                Stage {idx + 1}
-                              </Badge>
-                              <h3 className="text-xl font-bold text-foreground">
-                                {stage.title}
-                              </h3>
-                            </div>
-                            <p className="text-muted-foreground mb-4 leading-relaxed">
-                              {stage.description}
-                            </p>
-                            
-                            <div className="mt-4 p-3 rounded-lg bg-editor border border-border">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Terminal className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs font-semibold text-muted-foreground uppercase">Example</span>
-                              </div>
-                              <code className="font-mono text-sm text-editor-foreground break-all">
-                                {stage.example}
-                              </code>
-                            </div>
-                          </div>
-
-                          {/* Arrow (hidden on mobile) */}
-                          {idx < pipelineStages.length - 1 && (
-                            <div className="hidden lg:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary animate-bounce-horizontal">
-                              <ArrowRight className="h-6 w-6" />
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <CompilerPhaseDiagram />
         </section>
 
-        {/* Compiler Phases - Frontend vs Backend */}
-        <section 
-          ref={(el) => (sectionRefs.current[2] = el)}
-          className="mb-12 scroll-mt-20"
-        >
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Compiler Architecture</h2>
-            <p className="text-muted-foreground">
-              Understanding the two main phases of compilation
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {compilerPhases.map((phase, idx) => (
-              <Card 
-                key={idx}
-                className={`overflow-hidden border-2 ${phase.borderColor} hover:shadow-xl transition-all duration-300 hover:scale-105`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${phase.color} opacity-50 pointer-events-none`} />
-                <CardHeader className="relative">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Network className="h-5 w-5" />
-                    {phase.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative space-y-3">
-                  {phase.phases.map((p, i) => (
-                    <div 
-                      key={i}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-card/50 border border-border hover:bg-card transition-colors"
-                      style={{ animationDelay: `${i * 0.1}s` }}
-                    >
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-sm font-medium">{p}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Detailed Stages - Tabs */}
-        <section 
-          ref={(el) => (sectionRefs.current[3] = el)}
-          className="mb-12 scroll-mt-20"
-        >
+        {/* Deep Dive Tabs */}
+        <section className="mb-12">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Deep Dive: Compilation Stages</CardTitle>
+              <CardTitle className="text-2xl">Deep Dive: Compilation Phases</CardTitle>
               <CardDescription>
-                Explore each stage in detail with examples
+                Explore each phase with detailed examples
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="lexical" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
-                  <TabsTrigger value="lexical">Lexical</TabsTrigger>
-                  <TabsTrigger value="syntax">Syntax</TabsTrigger>
-                  <TabsTrigger value="semantic">Semantic</TabsTrigger>
-                  <TabsTrigger value="generation">Code Gen</TabsTrigger>
-                  <TabsTrigger value="optimization">Optimize</TabsTrigger>
-                  <TabsTrigger value="execution">Execute</TabsTrigger>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6 h-auto gap-1">
+                  <TabsTrigger value="lexical" className="text-xs md:text-sm">Scanner</TabsTrigger>
+                  <TabsTrigger value="syntax" className="text-xs md:text-sm">Parser</TabsTrigger>
+                  <TabsTrigger value="semantic" className="text-xs md:text-sm">Semantic</TabsTrigger>
+                  <TabsTrigger value="intermediate" className="text-xs md:text-sm">IR</TabsTrigger>
+                  <TabsTrigger value="optimization" className="text-xs md:text-sm">Optimize</TabsTrigger>
+                  <TabsTrigger value="codegen" className="text-xs md:text-sm">Code Gen</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="lexical" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Cog className="h-5 w-5 text-blue-500" />
-                      Lexical Analysis (Tokenization)
+                  <div className="p-6 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <Search className="h-6 w-6 text-blue-500" />
+                      Scanner (Lexical Analysis)
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      The first phase breaks source code into a stream of tokens. The lexer (scanner) reads 
-                      characters and groups them into meaningful units.
+                    <p className="text-muted-foreground mb-4">
+                      The scanner (or lexer) reads the source code character by character and groups them 
+                      into meaningful units called <strong className="text-foreground">tokens</strong>. 
+                      It uses regular expressions and finite automata to recognize patterns.
                     </p>
-                    <div className="space-y-2">
-                      <div className="font-mono text-sm bg-editor p-3 rounded border border-border">
-                        <div className="text-muted-foreground mb-2">Input:</div>
-                        <div className="text-editor-foreground">let x = 5 + 3</div>
-                        <div className="text-muted-foreground mt-3 mb-2">Tokens:</div>
+                    
+                    <div className="space-y-4">
+                      <div className="font-mono text-sm bg-editor p-4 rounded-lg border border-border">
+                        <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">Input Source Code:</div>
+                        <div className="text-editor-foreground text-lg">let x = 5 + 3</div>
+                        <div className="text-muted-foreground mt-4 mb-2 text-xs uppercase font-bold">Output Token Stream:</div>
                         <div className="flex flex-wrap gap-2">
-                          {['let', 'x', '=', '5', '+', '3'].map((token, i) => (
-                            <Badge key={i} variant="secondary" className="font-mono animate-slide-in" style={{ animationDelay: `${i * 0.1}s` }}>
-                              {token}
-                            </Badge>
+                          {[
+                            { token: 'LET', value: 'let', type: 'keyword' },
+                            { token: 'IDENT', value: 'x', type: 'identifier' },
+                            { token: 'ASSIGN', value: '=', type: 'operator' },
+                            { token: 'NUMBER', value: '5', type: 'literal' },
+                            { token: 'PLUS', value: '+', type: 'operator' },
+                            { token: 'NUMBER', value: '3', type: 'literal' }
+                          ].map((t, i) => (
+                            <div key={i} className="flex flex-col items-center p-2 rounded-lg bg-card border border-border animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
+                              <Badge variant="secondary" className="font-mono text-xs mb-1">{t.token}</Badge>
+                              <span className="text-xs text-muted-foreground">{t.value}</span>
+                            </div>
                           ))}
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-lg bg-card border border-border">
+                          <h4 className="font-semibold mb-2">Token Types</h4>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            <li>• Keywords: let, in, if, then, else, while, do</li>
+                            <li>• Identifiers: variable and function names</li>
+                            <li>• Literals: numbers (integers)</li>
+                            <li>• Operators: +, -, *, /, =, &lt;, &gt;</li>
+                            <li>• Punctuation: (, ), &#123;, &#125;, ,</li>
+                          </ul>
+                        </div>
+                        <div className="p-4 rounded-lg bg-card border border-border">
+                          <h4 className="font-semibold mb-2">Key Concepts</h4>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            <li>• Regular expressions define patterns</li>
+                            <li>• Finite automata recognize tokens</li>
+                            <li>• Whitespace is typically ignored</li>
+                            <li>• Comments are stripped</li>
+                            <li>• Error reporting on invalid characters</li>
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -445,111 +526,177 @@ const Compiler = () => {
                 </TabsContent>
 
                 <TabsContent value="syntax" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <GitBranch className="h-5 w-5 text-green-500" />
-                      Syntax Analysis (Parsing)
+                  <div className="p-6 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <GitBranch className="h-6 w-6 text-cyan-500" />
+                      Parser (Syntactic Analysis)
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      The parser builds an Abstract Syntax Tree (AST) from tokens using grammar rules. 
-                      This represents the hierarchical structure of the program.
+                    <p className="text-muted-foreground mb-4">
+                      The parser analyzes the token stream according to the language's <strong className="text-foreground">context-free grammar</strong> and 
+                      builds an <strong className="text-foreground">Abstract Syntax Tree (AST)</strong> representing the program's structure.
                     </p>
-                    <div className="font-mono text-sm bg-editor p-4 rounded border border-border">
-                      <div className="text-editor-foreground space-y-1">
-                        <div>Expression</div>
-                        <div className="pl-4">├─ Assignment</div>
-                        <div className="pl-8">│  ├─ Variable: x</div>
-                        <div className="pl-8">│  └─ BinaryOp: +</div>
-                        <div className="pl-12">│     ├─ Constant: 5</div>
-                        <div className="pl-12">│     └─ Constant: 3</div>
+                    
+                    <div className="font-mono text-sm bg-editor p-4 rounded-lg border border-border mb-4">
+                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">AST for: let x = 5 + 3 in x</div>
+                      <div className="text-editor-foreground space-y-1 pl-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-syntax-keyword">LetExpression</span>
+                        </div>
+                        <div className="pl-4 border-l-2 border-muted space-y-1">
+                          <div>├─ <span className="text-syntax-operator">binding:</span> x</div>
+                          <div>├─ <span className="text-syntax-operator">value:</span></div>
+                          <div className="pl-4 border-l-2 border-muted">
+                            <div>│  └─ <span className="text-syntax-keyword">BinaryOp</span> (+)</div>
+                            <div className="pl-6">├─ left: <span className="text-syntax-number">5</span></div>
+                            <div className="pl-6">└─ right: <span className="text-syntax-number">3</span></div>
+                          </div>
+                          <div>└─ <span className="text-syntax-operator">body:</span> <span className="text-foreground">x</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-card border border-border">
+                      <h4 className="font-semibold mb-2">Tripla Grammar (Simplified)</h4>
+                      <div className="font-mono text-xs text-muted-foreground space-y-1">
+                        <div>E → <span className="text-syntax-keyword">let</span> D <span className="text-syntax-keyword">in</span> E</div>
+                        <div>E → <span className="text-syntax-keyword">if</span> E <span className="text-syntax-keyword">then</span> E <span className="text-syntax-keyword">else</span> E</div>
+                        <div>E → <span className="text-syntax-keyword">while</span> E <span className="text-syntax-keyword">do</span> E</div>
+                        <div>E → E op E | (E) | n | x | x(Args)</div>
+                        <div>D → x = E | x(Params) &#123; E &#125;</div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="semantic" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Database className="h-5 w-5 text-purple-500" />
+                  <div className="p-6 rounded-xl bg-indigo-500/10 border border-indigo-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <Eye className="h-6 w-6 text-indigo-500" />
                       Semantic Analysis
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Validates program semantics: type checking, scope resolution, symbol table construction, 
-                      and ensures the program makes logical sense.
+                    <p className="text-muted-foreground mb-4">
+                      Validates that the program makes semantic sense. Builds symbol tables, resolves 
+                      variable bindings, and performs type checking.
                     </p>
-                    <div className="space-y-2">
-                      <div className="p-3 rounded bg-card border border-border">
-                        <div className="text-sm font-semibold mb-1">Symbol Table:</div>
-                        <div className="font-mono text-xs space-y-1">
-                          <div>x → Variable (Integer)</div>
-                          <div>add → Function (Integer, Integer) → Integer</div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-card border border-border">
+                        <h4 className="font-semibold mb-3">Symbol Table</h4>
+                        <div className="font-mono text-xs space-y-2">
+                          <div className="flex justify-between p-2 rounded bg-muted/50">
+                            <span>x</span>
+                            <span className="text-muted-foreground">Variable (Int) @ scope 1</span>
+                          </div>
+                          <div className="flex justify-between p-2 rounded bg-muted/50">
+                            <span>add</span>
+                            <span className="text-muted-foreground">Function (Int, Int) → Int</span>
+                          </div>
+                          <div className="flex justify-between p-2 rounded bg-muted/50">
+                            <span>y</span>
+                            <span className="text-muted-foreground">Parameter (Int) @ scope 2</span>
+                          </div>
                         </div>
+                      </div>
+                      <div className="p-4 rounded-lg bg-card border border-border">
+                        <h4 className="font-semibold mb-3">Checks Performed</h4>
+                        <ul className="text-sm text-muted-foreground space-y-2">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-stack-push" />
+                            Variable declared before use
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-stack-push" />
+                            Function arity matches call
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-stack-push" />
+                            No duplicate declarations
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-stack-push" />
+                            Scope rules respected
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="generation" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Cpu className="h-5 w-5 text-orange-500" />
-                      Code Generation
+                <TabsContent value="intermediate" className="space-y-4 animate-fade-in">
+                  <div className="p-6 rounded-xl bg-purple-500/10 border border-purple-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <Layers className="h-6 w-6 text-purple-500" />
+                      Intermediate Representation (IR)
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Transforms the AST into target machine code (TRAM instructions). 
-                      This is where the high-level program becomes executable.
+                    <p className="text-muted-foreground mb-4">
+                      The IR is a machine-independent representation that bridges the gap between 
+                      source code and target machine code. It facilitates optimization and portability.
                     </p>
-                    <div className="font-mono text-sm bg-editor p-3 rounded border border-border">
-                      <div className="text-editor-foreground space-y-1">
-                        <div>CONST 5</div>
-                        <div>CONST 3</div>
-                        <div>ADD</div>
-                        <div>STORE x</div>
+                    
+                    <div className="p-4 rounded-lg bg-card border border-border">
+                      <h4 className="font-semibold mb-2">Three-Address Code Example</h4>
+                      <div className="font-mono text-sm text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mb-2">// For: (a + b) * (c - d)</div>
+                        <div>t1 = a + b</div>
+                        <div>t2 = c - d</div>
+                        <div>t3 = t1 * t2</div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="optimization" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-pink-500/10 border border-pink-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-pink-500" />
+                  <div className="p-6 rounded-xl bg-pink-500/10 border border-pink-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <Zap className="h-6 w-6 text-pink-500" />
                       Optimization
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Optional phase that improves generated code: constant folding, dead code elimination, 
-                      register allocation, and more advanced optimizations.
+                    <p className="text-muted-foreground mb-4">
+                      Improves the generated code for better performance while preserving 
+                      program semantics. Can be applied at different levels (local, global, interprocedural).
                     </p>
-                    <div className="space-y-2">
-                      <div className="p-3 rounded bg-card border border-border">
-                        <div className="text-xs text-muted-foreground mb-1">Before:</div>
-                        <code className="text-sm">CONST 5; CONST 3; ADD</code>
-                        <div className="text-xs text-muted-foreground mt-2 mb-1">After:</div>
-                        <code className="text-sm">CONST 8</code>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-lg bg-card border border-border">
+                        <h4 className="font-semibold mb-2">Constant Folding</h4>
+                        <div className="font-mono text-sm">
+                          <div className="text-destructive line-through">CONST 3; CONST 5; ADD</div>
+                          <div className="text-stack-push">CONST 8</div>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-lg bg-card border border-border">
+                        <h4 className="font-semibold mb-2">Dead Code Elimination</h4>
+                        <div className="font-mono text-sm">
+                          <div className="text-destructive line-through">x = 5; x = 10; // first assignment unused</div>
+                          <div className="text-stack-push">x = 10;</div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="execution" className="space-y-4 animate-fade-in">
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Play className="h-5 w-5 text-green-500" />
-                      Execution
+                <TabsContent value="codegen" className="space-y-4 animate-fade-in">
+                  <div className="p-6 rounded-xl bg-orange-500/10 border border-orange-500/30">
+                    <h3 className="font-bold text-xl mb-3 flex items-center gap-2">
+                      <Binary className="h-6 w-6 text-orange-500" />
+                      Code Generation
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      The virtual machine executes the generated code, maintaining stack state, 
-                      registers, and control flow.
+                    <p className="text-muted-foreground mb-4">
+                      Produces the final target code (TRAM instructions) that can be executed 
+                      by the virtual machine. Maps high-level constructs to machine operations.
                     </p>
-                    <div className="space-y-2">
-                      <div className="p-3 rounded bg-card border border-border">
-                        <div className="text-sm font-semibold mb-2">Stack State:</div>
-                        <div className="font-mono text-xs space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Box className="h-3 w-3 text-green-500" />
-                            <span>TOP: 8</span>
-                          </div>
-                        </div>
+                    
+                    <div className="font-mono text-sm bg-editor p-4 rounded-lg border border-border">
+                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">Tripla: let add(x,y) &#123; x + y &#125; in add(5, 3)</div>
+                      <div className="text-editor-foreground space-y-1">
+                        <div><span className="text-syntax-keyword">JUMP</span> <span className="text-syntax-number">4</span> <span className="text-syntax-comment">// Skip function body</span></div>
+                        <div><span className="text-syntax-keyword">LOAD</span> <span className="text-syntax-number">-3</span> <span className="text-syntax-comment">// Load x</span></div>
+                        <div><span className="text-syntax-keyword">LOAD</span> <span className="text-syntax-number">-4</span> <span className="text-syntax-comment">// Load y</span></div>
+                        <div><span className="text-syntax-keyword">ADD</span> <span className="text-syntax-comment">// x + y</span></div>
+                        <div><span className="text-syntax-keyword">RETURN</span></div>
+                        <div><span className="text-syntax-keyword">CONST</span> <span className="text-syntax-number">3</span> <span className="text-syntax-comment">// Push argument y</span></div>
+                        <div><span className="text-syntax-keyword">CONST</span> <span className="text-syntax-number">5</span> <span className="text-syntax-comment">// Push argument x</span></div>
+                        <div><span className="text-syntax-keyword">CALL</span> <span className="text-syntax-number">1</span> <span className="text-syntax-comment">// Call add function</span></div>
                       </div>
                     </div>
                   </div>
@@ -559,33 +706,27 @@ const Compiler = () => {
           </Card>
         </section>
 
-        {/* Key Concepts */}
-        <section 
-          ref={(el) => (sectionRefs.current[4] = el)}
-          className="mb-12 scroll-mt-20"
-        >
+        {/* Key Concepts Grid */}
+        <section className="mb-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-foreground mb-2">Key Concepts</h2>
-            <p className="text-muted-foreground">
-              Fundamental ideas in compiler design
-            </p>
+            <p className="text-muted-foreground">Fundamental ideas in compiler design</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: FileText, title: "Context-Free Grammars", desc: "Formal rules defining language syntax" },
-              { icon: Box, title: "Abstract Syntax Trees", desc: "Tree representation of program structure" },
-              { icon: Database, title: "Symbol Tables", desc: "Data structures tracking identifiers" },
-              { icon: TrendingUp, title: "Type Systems", desc: "Rules for type checking and inference" },
-              { icon: Settings, title: "Code Optimization", desc: "Techniques to improve generated code" },
-              { icon: Network, title: "Control Flow", desc: "Managing program execution order" },
+              { icon: FileText, title: "Context-Free Grammars", desc: "Formal rules defining language syntax using production rules" },
+              { icon: GitBranch, title: "Abstract Syntax Trees", desc: "Tree representation capturing program structure" },
+              { icon: Box, title: "Symbol Tables", desc: "Data structures tracking identifiers and their attributes" },
+              { icon: Layers, title: "Intermediate Representation", desc: "Machine-independent code for optimization" },
+              { icon: Zap, title: "Code Optimization", desc: "Techniques to improve performance and reduce code size" },
+              { icon: Cpu, title: "Target Machine", desc: "Final executable code for the target platform (TRAM)" },
             ].map((concept, idx) => {
               const Icon = concept.icon;
               return (
                 <Card 
                   key={idx}
-                  className="hover:shadow-lg transition-all duration-300 hover:scale-105 hover:border-primary/50"
-                  style={{ animationDelay: `${idx * 0.1}s` }}
+                  className="hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-primary/50"
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
@@ -606,13 +747,13 @@ const Compiler = () => {
 
         {/* CTA Section */}
         <section className="mb-12">
-          <Card className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-2 border-primary/30 overflow-hidden">
+          <Card className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-2 border-primary/30 overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-            <CardContent className="relative p-12 text-center">
+            <CardContent className="relative p-8 md:p-12 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-6 animate-pulse-slow">
                 <Code2 className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold text-foreground mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
                 Ready to Explore?
               </h2>
               <p className="text-muted-foreground text-lg mb-6 max-w-2xl mx-auto">
