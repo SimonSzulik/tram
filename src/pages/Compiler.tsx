@@ -130,10 +130,10 @@ const backendPhases = [
     icon: Binary,
     title: "Code Generation",
     subtitle: "Target Code",
-    description: "Produces the final target code (TRAM instructions) that can be executed by the virtual machine or hardware.",
+    description: "Produces the final target code (machine code or bytecode) that can be executed by the target platform or virtual machine.",
     example: {
       input: "Optimized IR",
-      output: "CONST 5; CONST 3; ADD; RETURN"
+      output: "MOV R1, 5; MOV R2, 3; ADD R1, R2"
     },
     color: "bg-orange-500",
     details: [
@@ -206,7 +206,7 @@ const CompilerPhaseDiagram = () => {
               <div className="flex flex-col items-center gap-2">
                 <FileCode className="h-8 w-8" />
                 <span className="font-bold">Source</span>
-                <span className="text-xs opacity-80">Tripla Code</span>
+                <span className="text-xs opacity-80">High-Level Code</span>
               </div>
             </div>
             <ArrowRight className="h-6 w-6 text-muted-foreground" />
@@ -280,7 +280,7 @@ const CompilerPhaseDiagram = () => {
               <div className="flex flex-col items-center gap-2">
                 <Cpu className="h-8 w-8" />
                 <span className="font-bold">Target</span>
-                <span className="text-xs opacity-80">TRAM Code</span>
+                <span className="text-xs opacity-80">Machine Code</span>
               </div>
             </div>
           </div>
@@ -491,11 +491,11 @@ const Compiler = () => {
                         <div className="p-4 rounded-lg bg-card border border-border">
                           <h4 className="font-semibold mb-2">Token Types</h4>
                           <ul className="text-sm text-muted-foreground space-y-1">
-                            <li>• Keywords: let, in, if, then, else, while, do</li>
+                            <li>• Keywords: if, else, while, for, return, class</li>
                             <li>• Identifiers: variable and function names</li>
-                            <li>• Literals: numbers (integers)</li>
-                            <li>• Operators: +, -, *, /, =, &lt;, &gt;</li>
-                            <li>• Punctuation: (, ), &#123;, &#125;, ,</li>
+                            <li>• Literals: numbers, strings, booleans</li>
+                            <li>• Operators: +, -, *, /, =, ==, &lt;, &gt;</li>
+                            <li>• Punctuation: (, ), &#123;, &#125;, ;, ,</li>
                           </ul>
                         </div>
                         <div className="p-4 rounded-lg bg-card border border-border">
@@ -525,32 +525,32 @@ const Compiler = () => {
                     </p>
                     
                     <div className="font-mono text-sm bg-editor p-4 rounded-lg border border-border mb-4">
-                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">AST for: let x = 5 + 3 in x</div>
+                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">AST for: int x = 5 + 3;</div>
                       <div className="text-editor-foreground space-y-1 pl-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-syntax-keyword">LetExpression</span>
+                          <span className="text-syntax-keyword">VariableDeclaration</span>
                         </div>
                         <div className="pl-4 border-l-2 border-muted space-y-1">
-                          <div>├─ <span className="text-syntax-operator">binding:</span> x</div>
-                          <div>├─ <span className="text-syntax-operator">value:</span></div>
+                          <div>├─ <span className="text-syntax-operator">type:</span> int</div>
+                          <div>├─ <span className="text-syntax-operator">name:</span> x</div>
+                          <div>├─ <span className="text-syntax-operator">initializer:</span></div>
                           <div className="pl-4 border-l-2 border-muted">
-                            <div>│  └─ <span className="text-syntax-keyword">BinaryOp</span> (+)</div>
+                            <div>│  └─ <span className="text-syntax-keyword">BinaryExpression</span> (+)</div>
                             <div className="pl-6">├─ left: <span className="text-syntax-number">5</span></div>
                             <div className="pl-6">└─ right: <span className="text-syntax-number">3</span></div>
                           </div>
-                          <div>└─ <span className="text-syntax-operator">body:</span> <span className="text-foreground">x</span></div>
                         </div>
                       </div>
                     </div>
 
                     <div className="p-4 rounded-lg bg-card border border-border">
-                      <h4 className="font-semibold mb-2">Tripla Grammar (Simplified)</h4>
+                      <h4 className="font-semibold mb-2">Example Grammar (Simplified)</h4>
                       <div className="font-mono text-xs text-muted-foreground space-y-1">
-                        <div>E → <span className="text-syntax-keyword">let</span> D <span className="text-syntax-keyword">in</span> E</div>
-                        <div>E → <span className="text-syntax-keyword">if</span> E <span className="text-syntax-keyword">then</span> E <span className="text-syntax-keyword">else</span> E</div>
-                        <div>E → <span className="text-syntax-keyword">while</span> E <span className="text-syntax-keyword">do</span> E</div>
-                        <div>E → E op E | (E) | n | x | x(Args)</div>
-                        <div>D → x = E | x(Params) &#123; E &#125;</div>
+                        <div>Statement → Declaration | Assignment | IfStatement | WhileStatement</div>
+                        <div>Declaration → Type Identifier "=" Expression ";"</div>
+                        <div>IfStatement → <span className="text-syntax-keyword">if</span> "(" Expression ")" Block [<span className="text-syntax-keyword">else</span> Block]</div>
+                        <div>Expression → Expression Op Expression | "(" Expression ")" | Literal | Identifier</div>
+                        <div>Block → "&#123;" Statement* "&#125;"</div>
                       </div>
                     </div>
                   </div>
@@ -670,21 +670,19 @@ const Compiler = () => {
                       Code Generation
                     </h3>
                     <p className="text-muted-foreground mb-4">
-                      Produces the final target code (TRAM instructions) that can be executed 
-                      by the virtual machine. Maps high-level constructs to machine operations.
+                      Produces the final target code (machine code, bytecode, or assembly) that can be executed 
+                      by the target platform. Maps high-level constructs to machine operations.
                     </p>
                     
                     <div className="font-mono text-sm bg-editor p-4 rounded-lg border border-border">
-                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">Tripla: let add(x,y) &#123; x + y &#125; in add(5, 3)</div>
+                      <div className="text-muted-foreground mb-2 text-xs uppercase font-bold">Source: int result = a + b * c;</div>
                       <div className="text-editor-foreground space-y-1">
-                        <div><span className="text-syntax-keyword">JUMP</span> <span className="text-syntax-number">4</span> <span className="text-syntax-comment">// Skip function body</span></div>
-                        <div><span className="text-syntax-keyword">LOAD</span> <span className="text-syntax-number">-3</span> <span className="text-syntax-comment">// Load x</span></div>
-                        <div><span className="text-syntax-keyword">LOAD</span> <span className="text-syntax-number">-4</span> <span className="text-syntax-comment">// Load y</span></div>
-                        <div><span className="text-syntax-keyword">ADD</span> <span className="text-syntax-comment">// x + y</span></div>
-                        <div><span className="text-syntax-keyword">RETURN</span></div>
-                        <div><span className="text-syntax-keyword">CONST</span> <span className="text-syntax-number">3</span> <span className="text-syntax-comment">// Push argument y</span></div>
-                        <div><span className="text-syntax-keyword">CONST</span> <span className="text-syntax-number">5</span> <span className="text-syntax-comment">// Push argument x</span></div>
-                        <div><span className="text-syntax-keyword">CALL</span> <span className="text-syntax-number">1</span> <span className="text-syntax-comment">// Call add function</span></div>
+                        <div><span className="text-syntax-keyword">LOAD</span> R1, [b] <span className="text-syntax-comment">// Load b into R1</span></div>
+                        <div><span className="text-syntax-keyword">LOAD</span> R2, [c] <span className="text-syntax-comment">// Load c into R2</span></div>
+                        <div><span className="text-syntax-keyword">MUL</span> R1, R2 <span className="text-syntax-comment">// R1 = b * c</span></div>
+                        <div><span className="text-syntax-keyword">LOAD</span> R2, [a] <span className="text-syntax-comment">// Load a into R2</span></div>
+                        <div><span className="text-syntax-keyword">ADD</span> R1, R2 <span className="text-syntax-comment">// R1 = a + (b * c)</span></div>
+                        <div><span className="text-syntax-keyword">STORE</span> [result], R1 <span className="text-syntax-comment">// Store result</span></div>
                       </div>
                     </div>
                   </div>
@@ -708,7 +706,7 @@ const Compiler = () => {
               { icon: Box, title: "Symbol Tables", desc: "Data structures tracking identifiers and their attributes" },
               { icon: Layers, title: "Intermediate Representation", desc: "Machine-independent code for optimization" },
               { icon: Zap, title: "Code Optimization", desc: "Techniques to improve performance and reduce code size" },
-              { icon: Cpu, title: "Target Machine", desc: "Final executable code for the target platform (TRAM)" },
+              { icon: Cpu, title: "Target Machine", desc: "Final executable code for the target platform" },
             ].map((concept, idx) => {
               const Icon = concept.icon;
               return (
@@ -742,11 +740,11 @@ const Compiler = () => {
                 <Code2 className="h-8 w-8 text-primary" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                Ready to Explore?
+                Put Theory into Practice
               </h2>
               <p className="text-muted-foreground text-lg mb-6 max-w-2xl mx-auto">
-                Try compiling and executing Tripla code in our interactive workspace. 
-                See the compilation pipeline in action!
+                Apply these compiler concepts in our interactive workspace. Write code and see 
+                each compilation phase in action!
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Button asChild size="lg" className="gap-2">
@@ -758,7 +756,7 @@ const Compiler = () => {
                 <Button asChild variant="outline" size="lg" className="gap-2">
                   <Link to="/learn">
                     <BookOpen className="h-5 w-5" />
-                    Learn Tripla
+                    Learn the Language
                   </Link>
                 </Button>
               </div>
