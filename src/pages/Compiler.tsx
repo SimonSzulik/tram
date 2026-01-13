@@ -146,15 +146,10 @@ const backendPhases = [
 ];
 
 const CompilerPhaseDiagram = () => {
-  const [hoveredPhase, setHoveredPhase] = useState<string | null>(null);
-  const [animationStep, setAnimationStep] = useState(0);
+  const [selectedPhase, setSelectedPhase] = useState<string>("scanner");
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setAnimationStep(prev => (prev + 1) % 7);
-    }, 2000);
-    return () => clearInterval(timer);
-  }, []);
+  const allPhases = [...frontendPhases, ...backendPhases];
+  const selectedPhaseData = allPhases.find(p => p.id === selectedPhase);
 
   const PhaseBox = ({ 
     phase, 
@@ -168,20 +163,19 @@ const CompilerPhaseDiagram = () => {
     showArrow?: boolean;
   }) => {
     const Icon = phase.icon;
-    const isActive = animationStep === index || hoveredPhase === phase.id;
+    const isActive = selectedPhase === phase.id;
     
     return (
       <div className="flex items-center gap-2">
-        <div
+        <button
+          onClick={() => setSelectedPhase(phase.id)}
           className={`
-            relative p-4 rounded-xl border-2 transition-all duration-500 cursor-pointer
+            relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer
             ${isActive 
               ? `${phase.color} text-white border-transparent shadow-lg scale-105` 
-              : 'bg-card border-border hover:border-primary/50'
+              : 'bg-card border-border hover:border-primary/50 hover:scale-[1.02]'
             }
           `}
-          onMouseEnter={() => setHoveredPhase(phase.id)}
-          onMouseLeave={() => setHoveredPhase(null)}
         >
           <div className="flex flex-col items-center gap-2 min-w-[100px]">
             <Icon className={`h-6 w-6 ${isActive ? 'text-white' : 'text-primary'}`} />
@@ -190,20 +184,18 @@ const CompilerPhaseDiagram = () => {
             </span>
           </div>
           {isActive && (
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-inherit" />
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-inherit" />
           )}
-        </div>
+        </button>
         {showArrow && index < total - 1 && (
-          <ArrowRight className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
-            animationStep === index ? 'text-primary animate-bounce-horizontal' : 'text-muted-foreground'
-          }`} />
+          <ArrowRight className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
         )}
       </div>
     );
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Main Compiler Flow */}
       <div className="relative p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-background to-purple-500/5 border border-border">
         {/* Source and Target */}
@@ -293,35 +285,31 @@ const CompilerPhaseDiagram = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Phase Details (shown on hover) */}
-        {hoveredPhase && (
-          <div className="mt-4 p-4 rounded-xl bg-card border border-border animate-fade-in">
-            {[...frontendPhases, ...backendPhases].filter(p => p.id === hoveredPhase).map(phase => (
-              <div key={phase.id} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${phase.color} text-white`}>
-                    <phase.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-foreground">{phase.title}</h4>
-                    <p className="text-sm text-muted-foreground">{phase.subtitle}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">{phase.description}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {phase.details.map((detail, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CheckCircle className="h-3 w-3 text-stack-push flex-shrink-0" />
-                      <span>{detail}</span>
-                    </div>
-                  ))}
-                </div>
+      {/* Phase Details (always shown for selected phase) */}
+      {selectedPhaseData && (
+        <div className="p-6 rounded-xl bg-card border-2 border-border shadow-sm animate-fade-in" key={selectedPhaseData.id}>
+          <div className="flex items-center gap-4 mb-4">
+            <div className={`p-3 rounded-xl ${selectedPhaseData.color} text-white`}>
+              <selectedPhaseData.icon className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-xl text-foreground">{selectedPhaseData.title}</h4>
+              <p className="text-muted-foreground">{selectedPhaseData.subtitle}</p>
+            </div>
+          </div>
+          <p className="text-muted-foreground mb-4">{selectedPhaseData.description}</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {selectedPhaseData.details.map((detail, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle className="h-4 w-4 text-stack-push flex-shrink-0" />
+                <span>{detail}</span>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -436,10 +424,10 @@ const Compiler = () => {
         {/* Interactive Compiler Structure Diagram */}
         <section className="mb-12">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Compiler Structure</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Hover over each phase to learn more about its role in the compilation process
-            </p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Compiler Structure</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Click on each phase to learn more about its role in the compilation process
+          </p>
           </div>
 
           <CompilerPhaseDiagram />
