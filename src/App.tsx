@@ -16,7 +16,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/learn" element={<Learn />} />
           <Route path="/compiler" element={<Compiler />} />
-          <Route path="/compiler/:chapterId" element={<Compiler />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

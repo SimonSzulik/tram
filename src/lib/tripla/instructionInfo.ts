@@ -100,3 +100,46 @@ export const REGISTER_INFO: Record<string, RegisterInfo> = {
 export function mnemonicOf(code: string): string {
   return code.trim().split(/\s+/)[0]?.toUpperCase() ?? "";
 }
+
+/** Extract the operands from a machine-code line like "LOAD 0 1" → ["0", "1"]. */
+export function operandsOf(code: string): string[] {
+  return code.trim().split(/\s+/).slice(1);
+}
+
+const plural = (n: string, word: string) => `${n} ${word}${n === "1" ? "" : "s"}`;
+
+const frameSuffix = (d: string) =>
+  d === "0" ? " in the current frame." : `, reached ${plural(d, "static link")} up.`;
+
+/**
+ * A concrete, value-substituted description of a specific instruction line —
+ * e.g. "CONST 5" → "Push the constant 5 onto the stack." Returns null for
+ * instructions with no operands (their generic summary already says it all).
+ */
+export function describeConcrete(code: string): string | null {
+  const mnem = mnemonicOf(code);
+  const a = operandsOf(code);
+  switch (mnem) {
+    case "CONST":
+      return a[0] !== undefined ? `Push the constant ${a[0]} onto the stack.` : null;
+    case "LOAD":
+      return a[0] !== undefined
+        ? `Push the value of variable slot ${a[0]}${frameSuffix(a[1] ?? "0")}`
+        : null;
+    case "STORE":
+      return a[0] !== undefined
+        ? `Pop the top value and store it into variable slot ${a[0]}${frameSuffix(a[1] ?? "0")}`
+        : null;
+    case "IFZERO":
+      return a[0] !== undefined ? `Pop a value; if it is 0, jump to ${a[0]}.` : null;
+    case "GOTO":
+      return a[0] !== undefined ? `Jump to ${a[0]}.` : null;
+    case "INVOKE":
+      return a[1] !== undefined
+        ? `Call the function at ${a[1]} with ${plural(a[0] ?? "0", "argument")}` +
+            (a[2] && a[2] !== "0" ? ` (climbing ${plural(a[2], "static link")}).` : ".")
+        : null;
+    default:
+      return null;
+  }
+}

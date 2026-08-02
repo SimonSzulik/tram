@@ -1,7 +1,7 @@
-import { Info, Lightbulb, AlertTriangle, GraduationCap } from "lucide-react";
+import { Info, Lightbulb, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type CalloutVariant = "info" | "tip" | "warning" | "lecture";
+type CalloutVariant = "info" | "tip" | "warning";
 
 const VARIANTS: Record<
   CalloutVariant,
@@ -24,12 +24,6 @@ const VARIANTS: Record<
     label: "Watch out",
     wrap: "border-amber-500/30 bg-amber-500/5",
     iconColor: "text-amber-600 dark:text-amber-400",
-  },
-  lecture: {
-    icon: GraduationCap,
-    label: "In the lecture",
-    wrap: "border-cyan-500/30 bg-cyan-500/5",
-    iconColor: "text-cyan-600 dark:text-cyan-400",
   },
 };
 

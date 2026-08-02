@@ -2,7 +2,7 @@ import { Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { INSTRUCTION_INFO, mnemonicOf } from "@/lib/tripla/instructionInfo";
+import { INSTRUCTION_INFO, mnemonicOf, describeConcrete } from "@/lib/tripla/instructionInfo";
 
 interface Instruction {
   address: number;
@@ -106,15 +106,25 @@ export const MachineCodeView = ({
                     </span>
                   );
                   if (!info) return codeSpan;
+                  const concrete = describeConcrete(instruction.code);
                   return (
                     <Tooltip>
                       <TooltipTrigger asChild>{codeSpan}</TooltipTrigger>
                       <TooltipContent side="left" className="max-w-xs">
+                        {/* Actual instruction line */}
                         <p className="font-mono text-xs font-semibold text-primary">
-                          {info.name}
-                          {info.args && <span className="text-muted-foreground"> {info.args}</span>}
+                          {instruction.code}
+                          <span className="ml-1 text-muted-foreground">
+                            ({info.args ? `${info.name} ${info.args}` : info.name})
+                          </span>
                         </p>
-                        <p className="mt-1 text-xs">{info.summary}</p>
+                        {/* Value-specific description for this line */}
+                        {concrete && <p className="mt-1 text-xs font-medium">{concrete}</p>}
+                        {/* Generic definition */}
+                        <p className={cn("text-xs", concrete ? "mt-1 text-muted-foreground" : "mt-1")}>
+                          {concrete ? <span className="italic">General: </span> : null}
+                          {info.summary}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   );

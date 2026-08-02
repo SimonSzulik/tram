@@ -1,4 +1,4 @@
-// Curated TRIPLA example programs, adapted from the course triplaprograms/.
+// Curated TRIPLA example programs.
 
 export interface Example {
   id: string;

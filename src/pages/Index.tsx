@@ -5,6 +5,7 @@ import { CodeEditor } from "@/components/CodeEditor";
 import { MachineCodeView } from "@/components/MachineCodeView";
 import { StackVisualization } from "@/components/StackVisualization";
 import { CompilerControls } from "@/components/CompilerControls";
+import { CfgDialog } from "@/components/cfg/CfgDialog";
 import { compileTripla } from "@/lib/tripla";
 import { AbstractMachine, parseInstructions, MachineState } from "@/lib/tripla/abstractMachine";
 import { decodeCode } from "@/lib/workspaceLink";
@@ -60,6 +61,7 @@ const Index = () => {
   const [stateHistory, setStateHistory] = useState<MachineState[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [cfgOpen, setCfgOpen] = useState(false);
 
   const machineRef = useRef<AbstractMachine | null>(null);
   const runIntervalRef = useRef<number | null>(null);
@@ -220,7 +222,7 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
           {/* Left Panel: Code Editor */}
           <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in">
-            <CodeEditor value={code} onChange={setCode} />
+            <CodeEditor value={code} onChange={setCode} onViewCfg={() => setCfgOpen(true)} />
           </div>
 
           {/* Middle Panel: Machine Code */}
@@ -255,6 +257,8 @@ const Index = () => {
           warning={warning}
         />
       </main>
+
+      <CfgDialog open={cfgOpen} onOpenChange={setCfgOpen} code={code} />
     </div>
   );
 };

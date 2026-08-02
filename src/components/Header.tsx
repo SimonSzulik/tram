@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Workspace", icon: Play, disabled: false },
-  { to: "/learn", label: "TRIPLA Manual", icon: BookOpen, disabled: false },
-  { to: "/compiler", label: "Compiler Book", icon: Layers, disabled: false },
+  { to: "/learn", label: "Learn TRIPLA", icon: BookOpen, disabled: false },
+  { to: "/compiler", label: "Compiler Concepts", icon: Layers, disabled: false },
 ];
 
 export const Header = () => {
