@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -133,8 +133,8 @@ export default {
         "stack-pop": "stack-pop 0.3s ease-out forwards",
       },
       boxShadow: {
-        'glow': '0 0 20px hsl(var(--primary) / 0.15)',
-        'glow-lg': '0 0 40px hsl(var(--primary) / 0.2)',
+        'glow': 'var(--shadow-glow)',
+        'glow-lg': 'var(--shadow-glow)',
       },
     },
   },

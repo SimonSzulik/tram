@@ -196,14 +196,14 @@ const Learn = () => {
       <Header />
 
       {/* Hero */}
-      <div className="border-b border-border bg-gradient-to-b from-muted/40 to-transparent">
+      <div className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-6 text-center sm:px-6">
           <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">The TRIPLA language</h1>
         </div>
       </div>
 
       {/* Sticky sub-nav */}
-      <div className="sticky top-16 z-30 border-b border-border bg-card/95 backdrop-blur">
+      <div className="sticky top-14 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl gap-1 px-4 sm:px-6">
           {TABS.map((t) => {
             const Icon = t.icon;

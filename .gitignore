@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Agent / local tooling
+.claude/
+.cursor/
+
 # Lecture reference material (nested git repo, not part of the app)
 Compilers/
 .vercel

@@ -43,7 +43,7 @@ export const CompilerControls = ({
           onClick={onCompile}
           variant="default"
           size="lg"
-          className="gap-2 shadow-md hover:shadow-glow transition-shadow"
+          className="gap-2"
         >
           <Zap className="h-4 w-4" />
           Compile

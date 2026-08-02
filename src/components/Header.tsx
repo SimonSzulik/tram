@@ -13,36 +13,34 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container flex h-16 items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow transition-transform group-hover:scale-105">
-            <Code2 className="h-5 w-5" />
+      <div className="container flex h-14 items-center justify-between">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground transition-transform duration-150 ease-out group-active:scale-[0.97]">
+            <Code2 className="h-4 w-4" />
           </div>
           <div className="flex flex-col">
-            <span className="font-display text-lg font-bold text-foreground tracking-tight">
+            <span className="font-display text-base font-semibold text-foreground tracking-tight leading-none">
               Tripla
             </span>
-            <span className="text-xs text-muted-foreground -mt-0.5">
+            <span className="text-[11px] text-muted-foreground mt-0.5 leading-none">
               Compiler Visualizer
             </span>
           </div>
         </Link>
 
-        {/* Navigation */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0.5">
           {navItems.map((item) => {
             const isActive =
               item.to === "/"
                 ? location.pathname === "/"
                 : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
             const Icon = item.icon;
-            
+
             if (item.disabled) {
               return (
                 <span
                   key={item.to}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground/50 cursor-not-allowed"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-muted-foreground/50 cursor-not-allowed"
                   title="Coming soon"
                 >
                   <Icon className="h-4 w-4" />
@@ -50,15 +48,15 @@ export const Header = () => {
                 </span>
               );
             }
-            
+
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.98]",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
