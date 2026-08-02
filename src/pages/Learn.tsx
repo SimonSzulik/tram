@@ -197,8 +197,8 @@ const Learn = () => {
 
       {/* Hero */}
       <div className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-6 text-center sm:px-6">
-          <h1 className="font-display text-3xl font-bold text-foreground sm:text-4xl">The TRIPLA language</h1>
+        <div className="mx-auto max-w-6xl px-4 py-3 text-center sm:px-6">
+          <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">The TRIPLA language</h1>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ const Learn = () => {
                 type="button"
                 onClick={() => setPart(t.id)}
                 className={cn(
-                  "flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                   active
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -229,7 +229,7 @@ const Learn = () => {
       </div>
 
       {/* Body */}
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <main className="mx-auto max-w-6xl px-4 py-3 sm:px-6">
         {part === "features" && <Features />}
         {part === "reference" && <Reference />}
         {part === "wiki" && <Wiki />}

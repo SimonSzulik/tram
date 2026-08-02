@@ -1,44 +1,37 @@
-# Tripla — Compiler Visualizer
+# Tripla
 
-Interactive learning tool for the **Tripla** language and **TRAM** abstract machine. Write Tripla, compile it to machine code, step through execution, and watch the runtime stack — based on a compilers lecture at Trier University.
-
-![Tripla workspace](docs/screenshots/workspace.png)
+A project to visualize the basics of compiler concepts — write Tripla source, compile it to TRAM machine code, step through execution, and inspect the runtime stack. Based on the lecture *Compiler Design* at the University of Trier, held by Prof. Dr. Stephan Diehl.
 
 ## Features
 
-- **Workspace** — edit Tripla, compile to TRAM, step / run / reset, inspect PC · PP · FP · TOP and the stack
-- **CFG viewer** — control-flow graph of the compiled program
-- **Learn TRIPLA** — language features, grammar reference, and construct wiki
-- **Compiler Concepts** — pipeline overview (scanner → code generator)
+### Write Tripla code
 
-## Quick start
+Edit programs in the Tripla language, load examples, or upload a file.
 
-```sh
-npm install
-npm run dev
-```
+<p align="center">
+  <img src="docs/screenshots/code.png" alt="Tripla code editor" width="320" />
+</p>
 
-Open the URL Vite prints (default `http://localhost:8080`).
+### Compile to TRAM
 
-```sh
-npm run build    # production build → dist/
-npm run preview  # serve the build locally
-```
+Compile your source into TRAM instructions and step through them one by one.
 
-## Project layout
+<p align="center">
+  <img src="docs/screenshots/machine.png" alt="TRAM machine code" width="320" />
+</p>
 
-```
-src/
-  components/   UI (editor, machine view, stack, learn helpers)
-  content/      Tripla examples, grammar, wiki, compiler phases
-  lib/tripla/   Lexer, parser, compiler, abstract machine
-  pages/        Workspace, Learn, Compiler Concepts
-```
+### Watch the stack
 
-## Tech
+See registers and the runtime stack update as the program runs.
 
-React · TypeScript · Vite · Tailwind CSS · shadcn/ui
+<p align="center">
+  <img src="docs/screenshots/stack.png" alt="Runtime stack" width="320" />
+</p>
 
-## License
+### Control-flow graph
 
-Private course project unless otherwise noted.
+Open the CFG view to explore how control flows through the compiled program.
+
+<p align="center">
+  <img src="docs/screenshots/cfg.png" alt="Control-flow graph" width="480" />
+</p>

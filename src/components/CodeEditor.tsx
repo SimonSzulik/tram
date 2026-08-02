@@ -52,9 +52,14 @@ export const CodeEditor = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Refuse oversized uploads — editor is for small teaching programs.
+    if (file.size > 64 * 1024) {
+      e.target.value = "";
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") loadCode(reader.result);
+      if (typeof reader.result === "string") loadCode(reader.result.slice(0, 64_000));
     };
     reader.readAsText(file);
     e.target.value = "";

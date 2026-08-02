@@ -163,13 +163,14 @@ const Index = () => {
   };
 
   // Instantly execute to the terminal state, skipping the timed animation.
-  // Every intermediate state is pushed to history so "Back" still works.
+  // Keep a bounded history so "Back" still works without holding every step in memory.
   const handleRunToEnd = () => {
     setWarning(null);
     setIsRunning(false);
     const machine = machineRef.current;
     if (!machine || machine.isHalted()) return;
 
+    const MAX_STEP_BACK = 2_000;
     const collected: MachineState[] = [];
     let steps = 0;
     while (!machine.isHalted() && steps < MAX_RUN_TO_END_STEPS) {
@@ -177,8 +178,13 @@ const Index = () => {
       machine.step();
       steps += 1;
     }
+    const kept =
+      collected.length > MAX_STEP_BACK ? collected.slice(-MAX_STEP_BACK) : collected;
 
-    setStateHistory((prev) => [...prev, ...collected]);
+    setStateHistory((prev) => {
+      const merged = [...prev, ...kept];
+      return merged.length > MAX_STEP_BACK ? merged.slice(-MAX_STEP_BACK) : merged;
+    });
     setMachineState(machine.getState());
 
     if (!machine.isHalted()) {
@@ -228,7 +234,7 @@ const Index = () => {
         {/* Workspace Area */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
           {/* Left Panel: Code Editor */}
-          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in">
+          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" data-panel="code">
             <CodeEditor
               value={code}
               onChange={setCode}
@@ -238,7 +244,7 @@ const Index = () => {
           </div>
 
           {/* Middle Panel: Machine Code */}
-          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.1s" }} data-panel="machine">
             <MachineCodeView
               instructions={instructions}
               currentLine={machineState.halted ? -1 : machineState.PC}
@@ -246,7 +252,7 @@ const Index = () => {
           </div>
 
           {/* Right Panel: Stack */}
-          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.2s" }} data-panel="stack">
             <StackVisualization machineState={machineState} result={result} />
           </div>
         </div>

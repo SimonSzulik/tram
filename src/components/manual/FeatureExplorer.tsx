@@ -13,25 +13,25 @@ import { FEATURES, type Feature } from "@/content/tripla/features";
 const FeatureCard = ({ feature }: { feature: Feature }) => {
   const Icon = feature.icon;
   return (
-    <div className="flex h-full min-h-[28rem] flex-col rounded-2xl border border-border bg-card/60 p-6 sm:p-8">
+    <div className="flex h-full min-h-[22rem] flex-col rounded-xl border border-border bg-card/60 p-5 sm:min-h-[26rem] sm:p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="h-6 w-6" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="font-display text-2xl font-bold text-foreground">{feature.label}</h3>
+          <h3 className="font-display text-xl font-bold text-foreground sm:text-2xl">{feature.label}</h3>
           <p className="text-sm text-muted-foreground">{feature.tagline}</p>
         </div>
       </div>
 
-      <div className="mt-5 max-w-3xl space-y-3 text-[15px] leading-relaxed text-muted-foreground">
+      <div className="mt-4 max-w-3xl space-y-2 text-[15px] leading-relaxed text-muted-foreground">
         {feature.paragraphs.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
       </div>
 
-      <div className="mt-auto pt-5">
-        <CodeSample code={feature.example} lang="tripla" className="mt-0" />
+      <div className="mt-auto pt-4">
+        <CodeSample code={feature.example} lang="tripla" className="my-0 mt-0" />
         <p className="mt-2 text-sm text-muted-foreground">
           Result <span className="font-mono font-bold text-foreground">{feature.result}</span>
         </p>
@@ -67,10 +67,10 @@ export const FeatureExplorer = () => {
   }, [api]);
 
   return (
-    <div>
-      <section className="mb-4">
-        <h2 className="font-display text-2xl font-bold text-foreground">What is TRIPLA?</h2>
-        <p className="mt-2 max-w-none text-[15px] leading-relaxed text-muted-foreground">
+    <div className="flex min-h-[calc(100vh-11rem)] flex-col">
+      <section className="mb-2 shrink-0">
+        <h2 className="font-display text-xl font-bold text-foreground">What is TRIPLA?</h2>
+        <p className="mt-1 max-w-none text-sm leading-snug text-muted-foreground">
           <strong className="text-foreground">TRIPLA</strong> is a small,{" "}
           <strong className="text-foreground">expression-oriented</strong> language — every construct (
           <code className="font-mono text-sm">if</code>, <code className="font-mono text-sm">while</code>,
@@ -84,7 +84,7 @@ export const FeatureExplorer = () => {
       </section>
 
       {/* Quick-jump labels */}
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="mb-2 flex shrink-0 flex-wrap gap-1.5">
         {FEATURES.map((f, i) => {
           const ChipIcon = f.icon;
           const active = i === current;
@@ -94,7 +94,7 @@ export const FeatureExplorer = () => {
               type="button"
               onClick={() => api?.scrollTo(i)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
                 active
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -107,9 +107,9 @@ export const FeatureExplorer = () => {
         })}
       </div>
 
-      {/* Slideable cards — full width, no side arrows eating space */}
-      <Carousel setApi={setApi} opts={{ align: "start" }}>
-        <CarouselContent className="-ml-0">
+      {/* Slideable cards — grow to fill remaining viewport */}
+      <Carousel setApi={setApi} opts={{ align: "start" }} className="flex min-h-0 flex-1 flex-col">
+        <CarouselContent className="-ml-0 h-full">
           {FEATURES.map((f) => (
             <CarouselItem key={f.id} className="pl-0">
               <FeatureCard feature={f} />
@@ -119,7 +119,7 @@ export const FeatureExplorer = () => {
       </Carousel>
 
       {/* Arrows + position dots */}
-      <div className="mt-4 flex items-center justify-center gap-3">
+      <div className="mt-3 flex shrink-0 items-center justify-center gap-3 pb-1">
         <button
           type="button"
           aria-label="Previous feature"
