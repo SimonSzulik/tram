@@ -1,6 +1,8 @@
 import { Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { INSTRUCTION_INFO, mnemonicOf } from "@/lib/tripla/instructionInfo";
 
 interface Instruction {
   address: number;
@@ -91,14 +93,32 @@ export const MachineCodeView = ({
                 )}
 
                 {/* Instruction */}
-                <span
-                  className={cn(
-                    "flex-1",
-                    currentLine === idx ? "text-foreground font-semibold" : "text-foreground/80"
-                  )}
-                >
-                  {instruction.code}
-                </span>
+                {(() => {
+                  const info = INSTRUCTION_INFO[mnemonicOf(instruction.code)];
+                  const codeSpan = (
+                    <span
+                      className={cn(
+                        "flex-1 cursor-help decoration-dotted underline-offset-4 hover:underline",
+                        currentLine === idx ? "text-foreground font-semibold" : "text-foreground/80"
+                      )}
+                    >
+                      {instruction.code}
+                    </span>
+                  );
+                  if (!info) return codeSpan;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>{codeSpan}</TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-xs">
+                        <p className="font-mono text-xs font-semibold text-primary">
+                          {info.name}
+                          {info.args && <span className="text-muted-foreground"> {info.args}</span>}
+                        </p>
+                        <p className="mt-1 text-xs">{info.summary}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })()}
 
                 {/* Current indicator */}
                 {currentLine === idx && (

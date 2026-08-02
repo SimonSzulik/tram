@@ -1,5 +1,7 @@
-import { Layers } from "lucide-react";
+import { Layers, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { REGISTER_INFO } from "@/lib/tripla/instructionInfo";
 
 interface MachineState {
   PC: number;
@@ -13,13 +15,45 @@ interface MachineState {
 interface StackVisualizationProps {
   machineState: MachineState;
   title?: string;
+  result?: number | null;
 }
+
+const Register = ({
+  name,
+  value,
+  className,
+}: {
+  name: keyof typeof REGISTER_INFO;
+  value: string | number;
+  className?: string;
+}) => {
+  const info = REGISTER_INFO[name];
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex cursor-help flex-col items-center">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground decoration-dotted underline-offset-2 hover:underline">
+            {name}
+          </span>
+          <span className={cn("font-mono text-sm font-bold", className)}>{value}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p className="text-xs font-semibold text-primary">
+          {info.name} — {info.full}
+        </p>
+        <p className="mt-1 text-xs">{info.summary}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 export const StackVisualization = ({
   machineState,
   title = "Runtime Stack",
+  result = null,
 }: StackVisualizationProps) => {
-  const { PC, PP, FP, TOP, stack, halted } = machineState;
+  const { PP, FP, TOP, stack, halted } = machineState;
 
   // Get markers for each stack index
   const getMarkers = (idx: number): string[] => {
@@ -36,36 +70,28 @@ export const StackVisualization = ({
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <Layers className="h-4 w-4 text-primary" />
         <span className="font-medium text-sm text-foreground">{title}</span>
-        <span className="ml-auto text-xs text-muted-foreground font-mono">
-          {stack.length} items
-        </span>
+        {halted && result !== null ? (
+          <span className="ml-auto flex items-center gap-1.5 rounded-md border border-stack-push/40 bg-stack-push/10 px-2 py-0.5">
+            <Check className="h-3.5 w-3.5 text-stack-push" />
+            <span className="text-xs font-medium text-foreground">
+              Result <span className="font-mono font-bold tabular-nums">{result}</span>
+            </span>
+          </span>
+        ) : (
+          <span className="ml-auto text-xs text-muted-foreground font-mono">{stack.length} items</span>
+        )}
       </div>
 
       {/* Register Display */}
       <div className="grid grid-cols-4 gap-2 px-4 py-3 border-b border-border/50 bg-muted/20">
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">PC</span>
-          <span
-            className={cn(
-              "font-mono text-sm font-bold",
-              halted ? "text-destructive" : "text-primary"
-            )}
-          >
-            {halted ? "—" : PC}
-          </span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">PP</span>
-          <span className="font-mono text-sm font-bold text-foreground">{PP}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">FP</span>
-          <span className="font-mono text-sm font-bold text-foreground">{FP}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">TOP</span>
-          <span className="font-mono text-sm font-bold text-foreground">{TOP}</span>
-        </div>
+        <Register
+          name="PC"
+          value={machineState.halted ? "—" : machineState.PC}
+          className={machineState.halted ? "text-destructive" : "text-primary"}
+        />
+        <Register name="PP" value={PP} className="text-foreground" />
+        <Register name="FP" value={FP} className="text-foreground" />
+        <Register name="TOP" value={TOP} className="text-foreground" />
       </div>
 
       {/* Stack Visualization */}
