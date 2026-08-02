@@ -1,53 +1,115 @@
 import { useRef, useCallback } from "react";
-import { FileCode, Workflow } from "lucide-react";
+import { FileCode, Workflow, Upload } from "lucide-react";
 import { SyntaxHighlighter } from "./SyntaxHighlighter";
+import { EXAMPLES } from "@/content/tripla/examples";
 
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   title?: string;
   onViewCfg?: () => void;
+  /** Called when an example or uploaded file replaces the editor contents. */
+  onLoadCode?: (code: string) => void;
 }
 
-export const CodeEditor = ({ value, onChange, title = "Tripla Code", onViewCfg }: CodeEditorProps) => {
+export const CodeEditor = ({
+  value,
+  onChange,
+  title = "Tripla Code",
+  onViewCfg,
+  onLoadCode,
+}: CodeEditorProps) => {
   const lines = value.split("\n");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync textarea scroll with the container
   const handleTextareaScroll = useCallback(() => {
     if (textareaRef.current && containerRef.current) {
       containerRef.current.scrollTop = textareaRef.current.scrollTop;
     }
   }, []);
 
-  // Sync container scroll with textarea
   const handleContainerScroll = useCallback(() => {
     if (textareaRef.current && containerRef.current) {
       textareaRef.current.scrollTop = containerRef.current.scrollTop;
     }
   }, []);
 
+  const loadCode = (next: string) => {
+    if (onLoadCode) onLoadCode(next);
+    else onChange(next);
+  };
+
+  const handleExampleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    if (!id) return;
+    const example = EXAMPLES.find((ex) => ex.id === id);
+    if (example) loadCode(example.code);
+    e.target.value = "";
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") loadCode(reader.result);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   return (
     <div className="panel-card flex flex-col h-[600px]">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
-        <FileCode className="h-4 w-4 text-primary" />
-        <span className="font-medium text-sm text-foreground">{title}</span>
-        <div className="ml-auto flex items-center gap-3">
-          {onViewCfg && (
-            <button
-              type="button"
-              onClick={onViewCfg}
-              title="Visualize the control-flow graph of this program"
-              className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:text-primary"
-            >
-              <Workflow className="h-3.5 w-3.5" />
-              View CFG
-            </button>
-          )}
-          <span className="text-xs text-muted-foreground font-mono">{lines.length} lines</span>
-        </div>
+        <FileCode className="h-4 w-4 shrink-0 text-primary" />
+        <span className="shrink-0 font-medium text-sm text-foreground">{title}</span>
+        <select
+          aria-label="Load example"
+          defaultValue=""
+          onChange={handleExampleChange}
+          className="h-7 min-w-0 max-w-[9.5rem] rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="" disabled>
+            Examples…
+          </option>
+          {EXAMPLES.map((ex) => (
+            <option key={ex.id} value={ex.id}>
+              {ex.title}
+            </option>
+          ))}
+        </select>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".txt,text/plain"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          title="Upload a .txt file into the editor"
+          className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:text-primary"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Upload
+        </button>
+
+        {onViewCfg && (
+          <button
+            type="button"
+            onClick={onViewCfg}
+            title="Visualize the control-flow graph of this program"
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:text-primary"
+          >
+            <Workflow className="h-3.5 w-3.5" />
+            View CFG
+          </button>
+        )}
       </div>
 
       {/* Editor Area */}
@@ -57,7 +119,6 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code", onViewCfg }
         className="flex-1 overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
       >
         <div className="flex min-h-full">
-          {/* Line Numbers */}
           <div className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30">
             {lines.map((_, idx) => (
               <div
@@ -70,9 +131,7 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code", onViewCfg }
             ))}
           </div>
 
-          {/* Code Area with syntax highlighting overlay */}
           <div className="flex-1 relative min-h-full">
-            {/* Syntax highlighted layer (drives layout height) */}
             <div
               className="py-4 px-2 font-mono text-sm leading-6 whitespace-pre-wrap break-words pointer-events-none"
               aria-hidden="true"
@@ -80,7 +139,6 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code", onViewCfg }
               <SyntaxHighlighter code={value} />
             </div>
 
-            {/* Actual textarea (transparent text, captures input) */}
             <textarea
               ref={textareaRef}
               value={value}

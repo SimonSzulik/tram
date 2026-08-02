@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CodeSample, GlossaryTerm, Prose } from "@/components/learn";
+import { CodeSample, GlossaryTerm } from "@/components/learn";
 import {
   Carousel,
   CarouselContent,
@@ -68,34 +68,19 @@ export const FeatureExplorer = () => {
 
   return (
     <div>
-      <section className="mb-6">
+      <section className="mb-4">
         <h2 className="font-display text-2xl font-bold text-foreground">What is TRIPLA?</h2>
-        <Prose className="mt-2">
-          <p>
-            <strong>TRIPLA</strong> is a small, <strong>expression-oriented</strong> language: there are no
-            statements — every construct, including <code>if</code>, <code>while</code> and assignment, is an
-            expression that produces a value. Programs run on the{" "}
-            <GlossaryTerm term="TRAM">
-              A stack-based abstract machine that executes compiled TRIPLA code.
-            </GlossaryTerm>
-            , which you can drive step by step in the Workspace.
-          </p>
-          <ul>
-            <li>
-              <strong>Everything returns a value</strong> — even a loop or an assignment can sit where a number
-              is expected.
-            </li>
-            <li>
-              <strong>
-                Functions live in <code>let … in</code>
-              </strong>{" "}
-              — they can be recursive, defined side by side, and nested.
-            </li>
-            <li>
-              <strong>Values are integers</strong> — booleans exist for conditions and behave like 1 and 0.
-            </li>
-          </ul>
-        </Prose>
+        <p className="mt-2 max-w-none text-[15px] leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">TRIPLA</strong> is a small,{" "}
+          <strong className="text-foreground">expression-oriented</strong> language — every construct (
+          <code className="font-mono text-sm">if</code>, <code className="font-mono text-sm">while</code>,
+          assignment) yields a value. Functions live in <code className="font-mono text-sm">let … in</code>,
+          values are integers, and programs run on the{" "}
+          <GlossaryTerm term="TRAM">
+            A stack-based abstract machine that executes compiled TRIPLA code.
+          </GlossaryTerm>
+          .
+        </p>
       </section>
 
       {/* Quick-jump labels */}

@@ -1,4 +1,4 @@
-import { Cpu } from "lucide-react";
+import { Cpu, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,6 +15,15 @@ interface MachineCodeViewProps {
   currentLine: number;
   title?: string;
 }
+
+const formatInstructions = (instructions: Instruction[]): string =>
+  instructions
+    .map((instr) => {
+      const addr = String(instr.address).padStart(3, "0");
+      const label = instr.label ? `${instr.label}: ` : "";
+      return `${addr}: ${label}${instr.code}`;
+    })
+    .join("\n");
 
 export const MachineCodeView = ({
   instructions,
@@ -33,17 +42,28 @@ export const MachineCodeView = ({
         const containerHeight = container.clientHeight;
         const itemTop = currentItem.offsetTop;
         const itemHeight = currentItem.clientHeight;
-        
-        // Calculate scroll position to center the current item
-        const scrollTarget = itemTop - (containerHeight / 2) + (itemHeight / 2);
-        
+
+        const scrollTarget = itemTop - containerHeight / 2 + itemHeight / 2;
+
         container.scrollTo({
           top: Math.max(0, scrollTarget),
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     }
   }, [currentLine, instructions.length]);
+
+  const handleDownload = () => {
+    if (instructions.length === 0) return;
+    const text = formatInstructions(instructions);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tram-machine-code.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="panel-card flex flex-col h-[600px]">
@@ -51,9 +71,26 @@ export const MachineCodeView = ({
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <Cpu className="h-4 w-4 text-primary" />
         <span className="font-medium text-sm text-foreground">{title}</span>
-        <span className="ml-auto text-xs text-muted-foreground font-mono">
-          {instructions.length} instructions
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={instructions.length === 0}
+            title="Download machine code as .txt"
+            className={cn(
+              "flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium transition-colors",
+              instructions.length === 0
+                ? "cursor-not-allowed text-muted-foreground/40"
+                : "text-foreground hover:bg-muted hover:text-primary"
+            )}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download
+          </button>
+          <span className="text-xs text-muted-foreground font-mono">
+            {instructions.length} instructions
+          </span>
+        </div>
       </div>
 
       {/* Instructions List */}

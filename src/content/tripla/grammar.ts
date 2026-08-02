@@ -57,9 +57,9 @@ export const GRAMMAR: GrammarRule[] = [
 ];
 
 export const NONTERMINALS: { symbol: string; name: string }[] = [
-  { symbol: "E", name: "Expression — everything is one, and yields a value" },
-  { symbol: "A", name: "Argument list of a call" },
-  { symbol: "D", name: "Declaration list (function definitions)" },
-  { symbol: "V", name: "Parameter list of a definition" },
-  { symbol: "B", name: "Boolean, used only in condition position" },
+  { symbol: "E", name: "Expression" },
+  { symbol: "A", name: "Argument list" },
+  { symbol: "D", name: "Declaration list" },
+  { symbol: "V", name: "Parameter list" },
+  { symbol: "B", name: "Boolean" },
 ];

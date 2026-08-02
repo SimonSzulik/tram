@@ -10,8 +10,9 @@ import { compileTripla } from "@/lib/tripla";
 import { AbstractMachine, parseInstructions, MachineState } from "@/lib/tripla/abstractMachine";
 import { decodeCode } from "@/lib/workspaceLink";
 
-const SAMPLE_TRIPLA_CODE = `// Tripla Example: Recursive Factorial
-// Calculates factorial of 5
+const SAMPLE_TRIPLA_CODE = `// Tripla Example: Factorial
+// Recursive factorial of 5
+// Expected result: 120
 
 let
   fact(n) {
@@ -200,6 +201,12 @@ const Index = () => {
     setMachineState(initialMachineState);
   };
 
+  /** Replace editor contents and clear compiled machine state. */
+  const handleLoadCode = (next: string) => {
+    handleReset();
+    setCode(next);
+  };
+
   const result = resultOf(machineState);
 
   return (
@@ -222,7 +229,12 @@ const Index = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
           {/* Left Panel: Code Editor */}
           <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in">
-            <CodeEditor value={code} onChange={setCode} onViewCfg={() => setCfgOpen(true)} />
+            <CodeEditor
+              value={code}
+              onChange={setCode}
+              onViewCfg={() => setCfgOpen(true)}
+              onLoadCode={handleLoadCode}
+            />
           </div>
 
           {/* Middle Panel: Machine Code */}
@@ -252,7 +264,6 @@ const Index = () => {
           isHalted={machineState.halted}
           canStep={!machineState.halted}
           canStepBack={stateHistory.length > 0}
-          instructionCount={instructions.length}
           result={result}
           warning={warning}
         />

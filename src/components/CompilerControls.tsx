@@ -14,7 +14,6 @@ interface CompilerControlsProps {
   isHalted: boolean;
   canStep: boolean;
   canStepBack: boolean;
-  instructionCount: number;
   result: number | null;
   warning: string | null;
 }
@@ -31,7 +30,6 @@ export const CompilerControls = ({
   isHalted,
   canStep,
   canStepBack,
-  instructionCount,
   result,
   warning,
 }: CompilerControlsProps) => {
@@ -157,7 +155,7 @@ export const CompilerControls = ({
                 ? "Executing…"
                 : finished
                 ? "Finished"
-                : `Compiled · ${instructionCount} instructions`}
+                : "Compiled"}
             </span>
           </div>
         )}

@@ -70,15 +70,13 @@ export const StackVisualization = ({
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <Layers className="h-4 w-4 text-primary" />
         <span className="font-medium text-sm text-foreground">{title}</span>
-        {halted && result !== null ? (
+        {halted && result !== null && (
           <span className="ml-auto flex items-center gap-1.5 rounded-md border border-stack-push/40 bg-stack-push/10 px-2 py-0.5">
             <Check className="h-3.5 w-3.5 text-stack-push" />
             <span className="text-xs font-medium text-foreground">
               Result <span className="font-mono font-bold tabular-nums">{result}</span>
             </span>
           </span>
-        ) : (
-          <span className="ml-auto text-xs text-muted-foreground font-mono">{stack.length} items</span>
         )}
       </div>
 

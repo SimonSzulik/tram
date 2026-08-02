@@ -25,3 +25,5 @@ dist-ssr
 
 # Lecture reference material (nested git repo, not part of the app)
 Compilers/
+.vercel
+.env*

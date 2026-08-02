@@ -1,9 +1,7 @@
-import { ArrowRight, BookOpen, RefreshCw } from "lucide-react";
+import { BookOpen, RefreshCw } from "lucide-react";
 import { Header } from "@/components/Header";
 import { PhaseExplorer } from "@/components/concepts/PhaseExplorer";
-import { PHASES, GLOSSARY } from "@/content/concepts";
 import { Prose, Callout, AnimatedFigure, GlossaryTerm } from "@/components/learn";
-import { cn } from "@/lib/utils";
 
 const CompilerVsInterpreter = () => (
   <AnimatedFigure caption="Two ways to run a program. Most real systems mix both.">
@@ -16,9 +14,6 @@ const CompilerVsInterpreter = () => (
         <p className="mt-2 text-sm text-muted-foreground">
           Translates the <em>whole</em> program ahead of time into another language, which you run later.
         </p>
-        <p className="mt-2.5 rounded-md bg-muted/50 p-2 text-xs italic text-foreground/80">
-          Like a translator who renders an entire book, then hands you the finished translation.
-        </p>
       </div>
       <div data-reveal className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center gap-2">
@@ -28,9 +23,6 @@ const CompilerVsInterpreter = () => (
         <p className="mt-2 text-sm text-muted-foreground">
           Walks the program and carries out its effects <em>directly</em>, without producing a separate output
           program.
-        </p>
-        <p className="mt-2.5 rounded-md bg-muted/50 p-2 text-xs italic text-foreground/80">
-          Like a live interpreter translating a conversation sentence by sentence, as it happens.
         </p>
       </div>
     </div>
@@ -50,29 +42,7 @@ const CompilerVsInterpreter = () => (
   </AnimatedFigure>
 );
 
-const PhaseCard = ({ phase }: { phase: (typeof PHASES)[number] }) => {
-  const Icon = phase.icon;
-  return (
-    <div className="flex flex-col rounded-xl border border-border bg-card/60 p-4">
-      <div className="flex items-center gap-3">
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-muted", phase.accent)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <h3 className="font-display text-base font-semibold text-foreground">{phase.title}</h3>
-          <p className="text-xs text-muted-foreground">{phase.subtitle}</p>
-        </div>
-      </div>
-      <p className="mt-2.5 text-sm italic text-foreground/80">💡 {phase.analogy}</p>
-      <p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{phase.description}</p>
-    </div>
-  );
-};
-
 const Compiler = () => {
-  const frontend = PHASES.filter((p) => p.side === "frontend");
-  const backend = PHASES.filter((p) => p.side === "backend");
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -109,46 +79,15 @@ const Compiler = () => {
           </div>
         </section>
 
-        {/* Interactive pipeline */}
+        {/* Interactive pipeline (includes FE/BE framing) */}
         <section className="mt-8">
           <h2 className="font-display text-2xl font-bold text-foreground">The compilation pipeline</h2>
-          <p className="mb-4 mt-1 text-sm text-muted-foreground">
-            Source code flows left to right through these stages. Click any stage to explore it.
-          </p>
-          <PhaseExplorer />
-        </section>
-
-        {/* Front end / back end explained */}
-        <section className="mt-8">
-          <h2 className="font-display text-2xl font-bold text-foreground">Front end &amp; back end</h2>
           <p className="mb-4 mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Compilers are split in two. The <strong>front end</strong> understands the source language; the{" "}
             <strong>back end</strong> produces target code. Between them sits an internal representation, which
             lets one front end serve many targets.
           </p>
-
-          <h3 className="mb-2.5 mt-4 font-display text-lg font-semibold text-primary">
-            Front end — understanding the source
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {frontend.map((p) => (
-              <PhaseCard key={p.id} phase={p} />
-            ))}
-          </div>
-
-          <div className="my-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span className="rounded-full bg-muted px-3 py-1 font-mono text-xs">internal representation</span>
-            <ArrowRight className="h-4 w-4" />
-          </div>
-
-          <h3 className="mb-2.5 font-display text-lg font-semibold text-emerald-500">
-            Back end — producing the target
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {backend.map((p) => (
-              <PhaseCard key={p.id} phase={p} />
-            ))}
-          </div>
+          <PhaseExplorer />
         </section>
 
         <div className="mt-6">
@@ -160,22 +99,6 @@ const Compiler = () => {
             </p>
           </Callout>
         </div>
-
-        {/* Glossary */}
-        <section className="mt-8">
-          <h2 className="font-display text-2xl font-bold text-foreground">Key concepts</h2>
-          <p className="mb-3 mt-1 text-sm text-muted-foreground">
-            The vocabulary that shows up in every compiler.
-          </p>
-          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {GLOSSARY.map((g) => (
-              <div key={g.term} className="rounded-lg border border-border bg-card/60 px-3.5 py-3">
-                <p className="font-display font-semibold text-foreground">{g.term}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{g.definition}</p>
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   );
