@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import { FileCode } from "lucide-react";
+import { SyntaxHighlighter } from "./SyntaxHighlighter";
 
 interface CodeEditorProps {
   value: string;
@@ -10,13 +11,21 @@ interface CodeEditorProps {
 export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEditorProps) => {
   const lines = value.split("\n");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleScroll = () => {
-    if (textareaRef.current && lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+  // Sync textarea scroll with the container
+  const handleTextareaScroll = useCallback(() => {
+    if (textareaRef.current && containerRef.current) {
+      containerRef.current.scrollTop = textareaRef.current.scrollTop;
     }
-  };
+  }, []);
+
+  // Sync container scroll with textarea
+  const handleContainerScroll = useCallback(() => {
+    if (textareaRef.current && containerRef.current) {
+      textareaRef.current.scrollTop = containerRef.current.scrollTop;
+    }
+  }, []);
 
   return (
     <div className="panel-card h-full flex flex-col">
@@ -30,13 +39,14 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       </div>
 
       {/* Editor Area */}
-      <div className="flex-1 overflow-hidden bg-editor rounded-b-xl">
-        <div className="flex h-full">
+      <div 
+        ref={containerRef}
+        onScroll={handleContainerScroll}
+        className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar bg-editor rounded-b-xl"
+      >
+        <div className="flex min-h-full">
           {/* Line Numbers */}
-          <div 
-            ref={lineNumbersRef}
-            className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30 overflow-hidden"
-          >
+          <div className="flex-shrink-0 py-4 pl-4 pr-2 select-none bg-editor-highlight/30">
             {lines.map((_, idx) => (
               <div
                 key={idx}
@@ -48,16 +58,26 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
             ))}
           </div>
 
-          {/* Code Input */}
-          <div className="flex-1 relative overflow-hidden">
+          {/* Code Area with syntax highlighting overlay */}
+          <div className="flex-1 relative">
+            {/* Syntax highlighted layer (visible, no pointer events) */}
+            <div 
+              className="absolute inset-0 py-4 px-2 font-mono text-sm leading-6 whitespace-pre pointer-events-none overflow-hidden"
+              aria-hidden="true"
+            >
+              <SyntaxHighlighter code={value} />
+            </div>
+            
+            {/* Actual textarea (transparent text, captures input) */}
             <textarea
               ref={textareaRef}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              onScroll={handleScroll}
-              className="absolute inset-0 w-full h-full py-4 px-2 font-mono text-sm text-editor-foreground bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-auto custom-scrollbar"
+              onScroll={handleTextareaScroll}
+              className="relative w-full h-full min-h-[200px] py-4 px-2 font-mono text-sm text-transparent bg-transparent resize-none focus:outline-none leading-6 caret-execution overflow-hidden"
               spellCheck={false}
-              placeholder="// Write your Tripla code here..."
+              placeholder=""
+              style={{ caretColor: "hsl(var(--execution-current))" }}
             />
           </div>
         </div>

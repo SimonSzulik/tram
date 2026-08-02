@@ -40,6 +40,7 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [instructions, setInstructions] = useState<InstructionDisplay[]>([]);
   const [machineState, setMachineState] = useState<MachineState>(initialMachineState);
+  const [stateHistory, setStateHistory] = useState<MachineState[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   const machineRef = useRef<AbstractMachine | null>(null);
@@ -59,6 +60,10 @@ const Index = () => {
     if (isRunning && machineRef.current && !machineState.halted) {
       runIntervalRef.current = window.setInterval(() => {
         if (machineRef.current && !machineRef.current.isHalted()) {
+          // Save current state before stepping
+          const currentState = machineRef.current.getState();
+          setStateHistory(prev => [...prev, currentState]);
+          
           const newState = machineRef.current.step();
           setMachineState(newState);
           
@@ -96,6 +101,7 @@ const Index = () => {
     if (result.success) {
       setInstructions(result.instructionStrings);
       setIsCompiled(true);
+      setStateHistory([]);
       
       // Parse instructions and create machine
       const machineInstructions = parseInstructions(result.instructionStrings);
@@ -104,6 +110,7 @@ const Index = () => {
       
       toast.success("Compilation successful!", {
         description: `Generated ${result.instructionStrings.length} TRAM instructions`,
+        duration: 2000,
       });
     } else {
       setError(result.error || 'Unknown compilation error');
@@ -111,6 +118,7 @@ const Index = () => {
       setInstructions([]);
       machineRef.current = null;
       setMachineState(initialMachineState);
+      setStateHistory([]);
       toast.error("Compilation failed", {
         description: result.error,
       });
@@ -119,6 +127,10 @@ const Index = () => {
 
   const handleStep = () => {
     if (machineRef.current && !machineRef.current.isHalted()) {
+      // Save current state before stepping
+      const currentState = machineRef.current.getState();
+      setStateHistory(prev => [...prev, currentState]);
+      
       const newState = machineRef.current.step();
       setMachineState(newState);
       
@@ -131,6 +143,17 @@ const Index = () => {
       }
     } else {
       toast.info("Execution complete!");
+    }
+  };
+
+  const handleStepBack = () => {
+    if (stateHistory.length > 0 && machineRef.current) {
+      const previousState = stateHistory[stateHistory.length - 1];
+      setStateHistory(prev => prev.slice(0, -1));
+      
+      // Restore machine to previous state
+      machineRef.current.restoreState(previousState);
+      setMachineState(previousState);
     }
   };
 
@@ -147,6 +170,7 @@ const Index = () => {
     setIsRunning(false);
     setInstructions([]);
     setError(null);
+    setStateHistory([]);
     
     if (machineRef.current) {
       machineRef.current.reset();
@@ -194,11 +218,13 @@ const Index = () => {
         <CompilerControls
           onCompile={handleCompile}
           onStep={handleStep}
+          onStepBack={handleStepBack}
           onRun={handleRun}
           onReset={handleReset}
           isCompiled={isCompiled}
           isRunning={isRunning}
           canStep={!machineState.halted}
+          canStepBack={stateHistory.length > 0}
         />
       </main>
     </div>
