@@ -4,49 +4,55 @@ import { CodeEditor } from "@/components/CodeEditor";
 import { MachineCodeView } from "@/components/MachineCodeView";
 import { StackVisualization } from "@/components/StackVisualization";
 import { CompilerControls } from "@/components/CompilerControls";
+import { compileTripla } from "@/lib/tripla";
 import { toast } from "sonner";
 
-const SAMPLE_TRIPLA_CODE = `// Sample Tripla Program
-// Calculate the sum of 5 and 3
+const SAMPLE_TRIPLA_CODE = `// Tripla Example: Recursive Factorial
+// Calculates factorial of 5
 
-LET x = 5;
-LET y = 3;
-LET sum = x + y;
+let
+  fact(n) {
+    if (n == 0) then 1
+    else n * fact(n - 1)
+  }
+in
+  fact(5)`;
 
-// Output the result
-PRINT sum;`;
-
-const SAMPLE_INSTRUCTIONS = [
-  { address: 0, code: "PUSH 5", label: "START" },
-  { address: 1, code: "STORE x" },
-  { address: 2, code: "PUSH 3" },
-  { address: 3, code: "STORE y" },
-  { address: 4, code: "LOAD x" },
-  { address: 5, code: "LOAD y" },
-  { address: 6, code: "ADD" },
-  { address: 7, code: "STORE sum" },
-  { address: 8, code: "LOAD sum" },
-  { address: 9, code: "PRINT", label: "OUTPUT" },
-  { address: 10, code: "HALT" },
-];
+type InstructionDisplay = {
+  address: number;
+  code: string;
+  label?: string;
+};
 
 const Index = () => {
   const [code, setCode] = useState(SAMPLE_TRIPLA_CODE);
   const [isCompiled, setIsCompiled] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [currentLine, setCurrentLine] = useState(-1);
-  const [instructions, setInstructions] = useState<typeof SAMPLE_INSTRUCTIONS>([]);
+  const [instructions, setInstructions] = useState<InstructionDisplay[]>([]);
   const [stack, setStack] = useState<{ value: string | number; isNew?: boolean }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCompile = () => {
-    // Placeholder compilation
-    setInstructions(SAMPLE_INSTRUCTIONS);
-    setIsCompiled(true);
-    setCurrentLine(-1);
-    setStack([]);
-    toast.success("Compilation successful!", {
-      description: `Generated ${SAMPLE_INSTRUCTIONS.length} Tram instructions`,
-    });
+    setError(null);
+    const result = compileTripla(code);
+    
+    if (result.success) {
+      setInstructions(result.instructionStrings);
+      setIsCompiled(true);
+      setCurrentLine(-1);
+      setStack([]);
+      toast.success("Compilation successful!", {
+        description: `Generated ${result.instructionStrings.length} TRAM instructions`,
+      });
+    } else {
+      setError(result.error || 'Unknown compilation error');
+      setIsCompiled(false);
+      setInstructions([]);
+      toast.error("Compilation failed", {
+        description: result.error,
+      });
+    }
   };
 
   const handleStep = () => {
@@ -54,10 +60,12 @@ const Index = () => {
       const nextLine = currentLine + 1;
       setCurrentLine(nextLine);
       
-      // Simulate stack operations
+      // Simulate stack operations based on instruction
       const instruction = instructions[nextLine];
-      if (instruction.code.startsWith("PUSH")) {
-        const value = instruction.code.split(" ")[1];
+      const code = instruction.code;
+      
+      if (code.startsWith("CONST")) {
+        const value = code.split(" ")[1];
         setStack((prev) => [...prev, { value, isNew: true }]);
         setTimeout(() => {
           setStack((prev) =>
@@ -66,13 +74,37 @@ const Index = () => {
             )
           );
         }, 400);
-      } else if (instruction.code === "ADD" && stack.length >= 2) {
-        // Pop two, push result
+      } else if (code === "ADD" && stack.length >= 2) {
         setStack((prev) => {
           const newStack = prev.slice(0, -2);
           const sum = Number(prev[prev.length - 1].value) + Number(prev[prev.length - 2].value);
           return [...newStack, { value: sum, isNew: true }];
         });
+      } else if (code === "SUB" && stack.length >= 2) {
+        setStack((prev) => {
+          const newStack = prev.slice(0, -2);
+          const diff = Number(prev[prev.length - 2].value) - Number(prev[prev.length - 1].value);
+          return [...newStack, { value: diff, isNew: true }];
+        });
+      } else if (code === "MUL" && stack.length >= 2) {
+        setStack((prev) => {
+          const newStack = prev.slice(0, -2);
+          const product = Number(prev[prev.length - 2].value) * Number(prev[prev.length - 1].value);
+          return [...newStack, { value: product, isNew: true }];
+        });
+      } else if (code === "DIV" && stack.length >= 2) {
+        setStack((prev) => {
+          const newStack = prev.slice(0, -2);
+          const quotient = Math.floor(Number(prev[prev.length - 2].value) / Number(prev[prev.length - 1].value));
+          return [...newStack, { value: quotient, isNew: true }];
+        });
+      } else if (code === "POP" && stack.length >= 1) {
+        setStack((prev) => prev.slice(0, -1));
+      } else if (code === "HALT") {
+        toast.success("Program completed!", {
+          description: stack.length > 0 ? `Result: ${stack[stack.length - 1].value}` : "Stack is empty",
+        });
+        setIsRunning(false);
       }
     } else {
       toast.info("Execution complete!");
@@ -90,6 +122,7 @@ const Index = () => {
     setCurrentLine(-1);
     setInstructions([]);
     setStack([]);
+    setError(null);
     toast.info("Workspace reset");
   };
 
@@ -98,6 +131,13 @@ const Index = () => {
       <Header />
 
       <main className="flex-1 flex flex-col">
+        {/* Error Display */}
+        {error && (
+          <div className="mx-4 mt-4 p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-destructive font-mono text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Workspace Area */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
           {/* Left Panel: Code Editor */}
