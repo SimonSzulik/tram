@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Workspace", icon: Play, disabled: false },
-  { to: "/learn", label: "Learn Tripla", icon: BookOpen, disabled: false },
+  { to: "/learn", label: "Learn TRIPLA", icon: BookOpen, disabled: false },
   { to: "/compiler", label: "Compiler Concepts", icon: Layers, disabled: false },
 ];
 
@@ -32,7 +32,10 @@ export const Header = () => {
         {/* Navigation */}
         <nav className="flex items-center gap-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.to;
+            const isActive =
+              item.to === "/"
+                ? location.pathname === "/"
+                : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
             const Icon = item.icon;
             
             if (item.disabled) {

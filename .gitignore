@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Lecture reference material (nested git repo, not part of the app)
+Compilers/

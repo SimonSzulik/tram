@@ -1,14 +1,15 @@
 import { useRef, useCallback } from "react";
-import { FileCode } from "lucide-react";
+import { FileCode, Workflow } from "lucide-react";
 import { SyntaxHighlighter } from "./SyntaxHighlighter";
 
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   title?: string;
+  onViewCfg?: () => void;
 }
 
-export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEditorProps) => {
+export const CodeEditor = ({ value, onChange, title = "Tripla Code", onViewCfg }: CodeEditorProps) => {
   const lines = value.split("\n");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,9 +34,20 @@ export const CodeEditor = ({ value, onChange, title = "Tripla Code" }: CodeEdito
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
         <FileCode className="h-4 w-4 text-primary" />
         <span className="font-medium text-sm text-foreground">{title}</span>
-        <span className="ml-auto text-xs text-muted-foreground font-mono">
-          {lines.length} lines
-        </span>
+        <div className="ml-auto flex items-center gap-3">
+          {onViewCfg && (
+            <button
+              type="button"
+              onClick={onViewCfg}
+              title="Visualize the control-flow graph of this program"
+              className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted hover:text-primary"
+            >
+              <Workflow className="h-3.5 w-3.5" />
+              View CFG
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground font-mono">{lines.length} lines</span>
+        </div>
       </div>
 
       {/* Editor Area */}

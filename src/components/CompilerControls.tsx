@@ -1,16 +1,22 @@
-import { Play, StepForward, StepBack, RotateCcw, Zap, Pause } from "lucide-react";
+import { Play, StepForward, StepBack, RotateCcw, Zap, Pause, FastForward, Check, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface CompilerControlsProps {
   onCompile: () => void;
   onStep: () => void;
   onStepBack: () => void;
   onRun: () => void;
+  onRunToEnd: () => void;
   onReset: () => void;
   isCompiled: boolean;
   isRunning: boolean;
+  isHalted: boolean;
   canStep: boolean;
   canStepBack: boolean;
+  instructionCount: number;
+  result: number | null;
+  warning: string | null;
 }
 
 export const CompilerControls = ({
@@ -18,12 +24,19 @@ export const CompilerControls = ({
   onStep,
   onStepBack,
   onRun,
+  onRunToEnd,
   onReset,
   isCompiled,
   isRunning,
+  isHalted,
   canStep,
   canStepBack,
+  instructionCount,
+  result,
+  warning,
 }: CompilerControlsProps) => {
+  const finished = isCompiled && isHalted;
+
   return (
     <div className="flex items-center gap-2 p-4 bg-card border-t border-border">
       {/* Primary Actions */}
@@ -64,7 +77,7 @@ export const CompilerControls = ({
           onClick={onRun}
           variant="outline"
           size="lg"
-          disabled={!isCompiled}
+          disabled={!isCompiled || isHalted}
           className="gap-2"
         >
           {isRunning ? (
@@ -78,6 +91,18 @@ export const CompilerControls = ({
               Run All
             </>
           )}
+        </Button>
+
+        <Button
+          onClick={onRunToEnd}
+          variant="outline"
+          size="lg"
+          disabled={!isCompiled || isHalted}
+          className="gap-2"
+          title="Skip the animation and jump straight to the final state"
+        >
+          <FastForward className="h-4 w-4" />
+          Run to End
         </Button>
       </div>
 
@@ -97,24 +122,45 @@ export const CompilerControls = ({
 
       {/* Status */}
       <div className="ml-auto flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div
-            className={`h-2 w-2 rounded-full ${
-              isCompiled
-                ? isRunning
+        {warning && (
+          <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm">{warning}</span>
+          </div>
+        )}
+
+        {finished && result !== null ? (
+          <div className="flex items-center gap-2 rounded-md border border-stack-push/40 bg-stack-push/10 px-3 py-1.5">
+            <Check className="h-4 w-4 text-stack-push" />
+            <span className="text-sm font-medium text-foreground">
+              Result: <span className="font-mono font-bold tabular-nums">{result}</span>
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                "h-2 w-2 rounded-full",
+                !isCompiled
+                  ? "bg-muted-foreground"
+                  : isRunning
                   ? "bg-execution animate-pulse"
-                  : "bg-stack-push"
-                : "bg-muted-foreground"
-            }`}
-          />
-          <span className="text-sm text-muted-foreground">
-            {!isCompiled
-              ? "Ready to compile"
-              : isRunning
-              ? "Executing..."
-              : "Compiled"}
-          </span>
-        </div>
+                  : finished
+                  ? "bg-stack-push"
+                  : "bg-primary"
+              )}
+            />
+            <span className="text-sm text-muted-foreground">
+              {!isCompiled
+                ? "Ready to compile"
+                : isRunning
+                ? "Executing…"
+                : finished
+                ? "Finished"
+                : `Compiled · ${instructionCount} instructions`}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

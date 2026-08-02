@@ -1,6 +1,8 @@
 import { Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { INSTRUCTION_INFO, mnemonicOf, describeConcrete } from "@/lib/tripla/instructionInfo";
 
 interface Instruction {
   address: number;
@@ -91,14 +93,42 @@ export const MachineCodeView = ({
                 )}
 
                 {/* Instruction */}
-                <span
-                  className={cn(
-                    "flex-1",
-                    currentLine === idx ? "text-foreground font-semibold" : "text-foreground/80"
-                  )}
-                >
-                  {instruction.code}
-                </span>
+                {(() => {
+                  const info = INSTRUCTION_INFO[mnemonicOf(instruction.code)];
+                  const codeSpan = (
+                    <span
+                      className={cn(
+                        "flex-1 cursor-help decoration-dotted underline-offset-4 hover:underline",
+                        currentLine === idx ? "text-foreground font-semibold" : "text-foreground/80"
+                      )}
+                    >
+                      {instruction.code}
+                    </span>
+                  );
+                  if (!info) return codeSpan;
+                  const concrete = describeConcrete(instruction.code);
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>{codeSpan}</TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-xs">
+                        {/* Actual instruction line */}
+                        <p className="font-mono text-xs font-semibold text-primary">
+                          {instruction.code}
+                          <span className="ml-1 text-muted-foreground">
+                            ({info.args ? `${info.name} ${info.args}` : info.name})
+                          </span>
+                        </p>
+                        {/* Value-specific description for this line */}
+                        {concrete && <p className="mt-1 text-xs font-medium">{concrete}</p>}
+                        {/* Generic definition */}
+                        <p className={cn("text-xs", concrete ? "mt-1 text-muted-foreground" : "mt-1")}>
+                          {concrete ? <span className="italic">General: </span> : null}
+                          {info.summary}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })()}
 
                 {/* Current indicator */}
                 {currentLine === idx && (
