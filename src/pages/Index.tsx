@@ -75,7 +75,7 @@ const Index = () => {
             });
           }
         }
-      }, 200);
+      }, 1000);
     } else if (runIntervalRef.current) {
       clearInterval(runIntervalRef.current);
       runIntervalRef.current = null;

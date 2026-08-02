@@ -1,5 +1,6 @@
 import { Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef } from "react";
 
 interface Instruction {
   address: number;
@@ -18,6 +19,30 @@ export const MachineCodeView = ({
   currentLine,
   title = "Tram Machine Code",
 }: MachineCodeViewProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Auto-scroll to current instruction and center it
+  useEffect(() => {
+    if (currentLine >= 0 && currentLine < instructions.length && containerRef.current) {
+      const currentItem = itemRefs.current[currentLine];
+      if (currentItem) {
+        const container = containerRef.current;
+        const containerHeight = container.clientHeight;
+        const itemTop = currentItem.offsetTop;
+        const itemHeight = currentItem.clientHeight;
+        
+        // Calculate scroll position to center the current item
+        const scrollTarget = itemTop - (containerHeight / 2) + (itemHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, scrollTarget),
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [currentLine, instructions.length]);
+
   return (
     <div className="panel-card h-full flex flex-col">
       {/* Header */}
@@ -30,7 +55,10 @@ export const MachineCodeView = ({
       </div>
 
       {/* Instructions List */}
-      <div className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar p-2">
+      <div 
+        ref={containerRef}
+        className="flex-1 min-h-0 max-h-[520px] overflow-y-auto custom-scrollbar p-2"
+      >
         {instructions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Cpu className="h-12 w-12 mb-3 opacity-30" />
@@ -42,6 +70,7 @@ export const MachineCodeView = ({
             {instructions.map((instruction, idx) => (
               <div
                 key={idx}
+                ref={(el) => { itemRefs.current[idx] = el; }}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg font-mono text-sm transition-all duration-300",
                   currentLine === idx
