@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { CodeEditor } from "@/components/CodeEditor";
 import { MachineCodeView } from "@/components/MachineCodeView";
 import { StackVisualization } from "@/components/StackVisualization";
 import { CompilerControls } from "@/components/CompilerControls";
 import { compileTripla } from "@/lib/tripla";
+import { AbstractMachine, parseInstructions, MachineState } from "@/lib/tripla/abstractMachine";
 import { toast } from "sonner";
 
 const SAMPLE_TRIPLA_CODE = `// Tripla Example: Recursive Factorial
@@ -24,14 +25,69 @@ type InstructionDisplay = {
   label?: string;
 };
 
+const initialMachineState: MachineState = {
+  PC: 0,
+  PP: 0,
+  FP: 0,
+  TOP: -1,
+  stack: [],
+  halted: true,
+};
+
 const Index = () => {
   const [code, setCode] = useState(SAMPLE_TRIPLA_CODE);
   const [isCompiled, setIsCompiled] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [currentLine, setCurrentLine] = useState(-1);
   const [instructions, setInstructions] = useState<InstructionDisplay[]>([]);
-  const [stack, setStack] = useState<{ value: string | number; isNew?: boolean }[]>([]);
+  const [machineState, setMachineState] = useState<MachineState>(initialMachineState);
   const [error, setError] = useState<string | null>(null);
+  
+  const machineRef = useRef<AbstractMachine | null>(null);
+  const runIntervalRef = useRef<number | null>(null);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (runIntervalRef.current) {
+        clearInterval(runIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-run effect
+  useEffect(() => {
+    if (isRunning && machineRef.current && !machineState.halted) {
+      runIntervalRef.current = window.setInterval(() => {
+        if (machineRef.current && !machineRef.current.isHalted()) {
+          const newState = machineRef.current.step();
+          setMachineState(newState);
+          
+          if (newState.halted) {
+            setIsRunning(false);
+            if (runIntervalRef.current) {
+              clearInterval(runIntervalRef.current);
+              runIntervalRef.current = null;
+            }
+            toast.success("Program completed!", {
+              description: newState.stack.length > 0 
+                ? `Result: ${newState.stack[newState.TOP]}` 
+                : "Stack is empty",
+            });
+          }
+        }
+      }, 200);
+    } else if (runIntervalRef.current) {
+      clearInterval(runIntervalRef.current);
+      runIntervalRef.current = null;
+    }
+
+    return () => {
+      if (runIntervalRef.current) {
+        clearInterval(runIntervalRef.current);
+        runIntervalRef.current = null;
+      }
+    };
+  }, [isRunning, machineState.halted]);
 
   const handleCompile = () => {
     setError(null);
@@ -40,8 +96,12 @@ const Index = () => {
     if (result.success) {
       setInstructions(result.instructionStrings);
       setIsCompiled(true);
-      setCurrentLine(-1);
-      setStack([]);
+      
+      // Parse instructions and create machine
+      const machineInstructions = parseInstructions(result.instructionStrings);
+      machineRef.current = new AbstractMachine(machineInstructions);
+      setMachineState(machineRef.current.getState());
+      
       toast.success("Compilation successful!", {
         description: `Generated ${result.instructionStrings.length} TRAM instructions`,
       });
@@ -49,6 +109,8 @@ const Index = () => {
       setError(result.error || 'Unknown compilation error');
       setIsCompiled(false);
       setInstructions([]);
+      machineRef.current = null;
+      setMachineState(initialMachineState);
       toast.error("Compilation failed", {
         description: result.error,
       });
@@ -56,73 +118,42 @@ const Index = () => {
   };
 
   const handleStep = () => {
-    if (currentLine < instructions.length - 1) {
-      const nextLine = currentLine + 1;
-      setCurrentLine(nextLine);
+    if (machineRef.current && !machineRef.current.isHalted()) {
+      const newState = machineRef.current.step();
+      setMachineState(newState);
       
-      // Simulate stack operations based on instruction
-      const instruction = instructions[nextLine];
-      const code = instruction.code;
-      
-      if (code.startsWith("CONST")) {
-        const value = code.split(" ")[1];
-        setStack((prev) => [...prev, { value, isNew: true }]);
-        setTimeout(() => {
-          setStack((prev) =>
-            prev.map((item, idx) =>
-              idx === prev.length - 1 ? { ...item, isNew: false } : item
-            )
-          );
-        }, 400);
-      } else if (code === "ADD" && stack.length >= 2) {
-        setStack((prev) => {
-          const newStack = prev.slice(0, -2);
-          const sum = Number(prev[prev.length - 1].value) + Number(prev[prev.length - 2].value);
-          return [...newStack, { value: sum, isNew: true }];
-        });
-      } else if (code === "SUB" && stack.length >= 2) {
-        setStack((prev) => {
-          const newStack = prev.slice(0, -2);
-          const diff = Number(prev[prev.length - 2].value) - Number(prev[prev.length - 1].value);
-          return [...newStack, { value: diff, isNew: true }];
-        });
-      } else if (code === "MUL" && stack.length >= 2) {
-        setStack((prev) => {
-          const newStack = prev.slice(0, -2);
-          const product = Number(prev[prev.length - 2].value) * Number(prev[prev.length - 1].value);
-          return [...newStack, { value: product, isNew: true }];
-        });
-      } else if (code === "DIV" && stack.length >= 2) {
-        setStack((prev) => {
-          const newStack = prev.slice(0, -2);
-          const quotient = Math.floor(Number(prev[prev.length - 2].value) / Number(prev[prev.length - 1].value));
-          return [...newStack, { value: quotient, isNew: true }];
-        });
-      } else if (code === "POP" && stack.length >= 1) {
-        setStack((prev) => prev.slice(0, -1));
-      } else if (code === "HALT") {
+      if (newState.halted) {
         toast.success("Program completed!", {
-          description: stack.length > 0 ? `Result: ${stack[stack.length - 1].value}` : "Stack is empty",
+          description: newState.stack.length > 0 
+            ? `Result: ${newState.stack[newState.TOP]}` 
+            : "Stack is empty",
         });
-        setIsRunning(false);
       }
     } else {
       toast.info("Execution complete!");
-      setIsRunning(false);
     }
   };
 
   const handleRun = () => {
-    setIsRunning(!isRunning);
+    if (isRunning) {
+      setIsRunning(false);
+    } else if (machineRef.current && !machineRef.current.isHalted()) {
+      setIsRunning(true);
+    }
   };
 
   const handleReset = () => {
     setIsCompiled(false);
     setIsRunning(false);
-    setCurrentLine(-1);
     setInstructions([]);
-    setStack([]);
     setError(null);
+    
+    if (machineRef.current) {
+      machineRef.current.reset();
+    }
+    machineRef.current = null;
+    setMachineState(initialMachineState);
+    
     toast.info("Workspace reset");
   };
 
@@ -149,13 +180,13 @@ const Index = () => {
           <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.1s" }}>
             <MachineCodeView
               instructions={instructions}
-              currentLine={currentLine}
+              currentLine={machineState.halted ? -1 : machineState.PC}
             />
           </div>
 
           {/* Right Panel: Stack */}
           <div className="lg:col-span-1 min-h-[400px] lg:min-h-0 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-            <StackVisualization stack={stack} />
+            <StackVisualization machineState={machineState} />
           </div>
         </div>
 
@@ -167,7 +198,7 @@ const Index = () => {
           onReset={handleReset}
           isCompiled={isCompiled}
           isRunning={isRunning}
-          canStep={currentLine < instructions.length - 1}
+          canStep={!machineState.halted}
         />
       </main>
     </div>
