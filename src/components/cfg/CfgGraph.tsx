@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import dagre from "@dagrejs/dagre";
-import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Download, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { CfgGraph as Graph, CfgKind } from "@/lib/tripla/cfg";
+import { downloadCfgPng, downloadCfgSvg } from "./exportCfg";
 
 interface Placed {
   id: number;
@@ -157,8 +164,19 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 export const CfgGraph = ({ graph }: { graph: Graph }) => {
   const layout = useMemo(() => computeLayout(graph), [graph]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [t, setT] = useState({ x: 0, y: 0, k: 1 });
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+
+  const exportSize = { width: layout.width, height: layout.height };
+  const onDownloadSvg = () => {
+    if (!svgRef.current || layout.width === 0) return;
+    downloadCfgSvg(svgRef.current, exportSize);
+  };
+  const onDownloadPng = () => {
+    if (!svgRef.current || layout.width === 0) return;
+    void downloadCfgPng(svgRef.current, exportSize);
+  };
 
   const fit = useCallback(() => {
     const el = containerRef.current;
@@ -227,7 +245,7 @@ export const CfgGraph = ({ graph }: { graph: Graph }) => {
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
       >
-        <svg width="100%" height="100%">
+        <svg ref={svgRef} width="100%" height="100%">
           <defs>
             <marker id="cfg-arrow" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto" markerUnits="userSpaceOnUse">
               <path d="M0,0 L8,3 L0,6 Z" fill="hsl(var(--foreground) / 0.55)" />
@@ -247,8 +265,19 @@ export const CfgGraph = ({ graph }: { graph: Graph }) => {
         </svg>
       </div>
 
-      {/* Zoom controls */}
+      {/* Zoom + download controls */}
       <div className="absolute bottom-3 right-3 flex flex-col gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <ControlButton title="Download graph">
+              <Download className="h-4 w-4" />
+            </ControlButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="left" className="min-w-[9rem]">
+            <DropdownMenuItem onSelect={onDownloadSvg}>Download SVG</DropdownMenuItem>
+            <DropdownMenuItem onSelect={onDownloadPng}>Download PNG</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <ControlButton onClick={() => zoomBy(1.2)} title="Zoom in">
           <ZoomIn className="h-4 w-4" />
         </ControlButton>
@@ -274,8 +303,12 @@ export const CfgGraph = ({ graph }: { graph: Graph }) => {
   );
 };
 
-const ControlButton = ({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) => (
+const ControlButton = forwardRef<
+  HTMLButtonElement,
+  { onClick?: () => void; title: string; children: React.ReactNode }
+>(({ onClick, title, children }, ref) => (
   <button
+    ref={ref}
     type="button"
     onClick={onClick}
     title={title}
@@ -283,7 +316,8 @@ const ControlButton = ({ onClick, title, children }: { onClick: () => void; titl
   >
     {children}
   </button>
-);
+));
+ControlButton.displayName = "ControlButton";
 
 const LegendItem = ({ swatch, label, shape }: { swatch: string; label: string; shape?: "diamond" }) => (
   <span className="flex items-center gap-1.5">

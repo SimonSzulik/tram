@@ -1,5 +1,12 @@
 // TRAM Abstract Machine - TypeScript implementation based on Java version
 
+export class MachineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MachineError";
+  }
+}
+
 export enum Opcode {
   CONST = 1,
   LOAD = 2,
@@ -218,7 +225,11 @@ export class AbstractMachine {
   private doDiv(): void {
     const a = this.STACK[this.TOP - 1] ?? 0;
     const b = this.STACK[this.TOP] ?? 0;
-    this.STACK[this.TOP - 1] = Math.floor(a / b);
+    if (b === 0) {
+      throw new MachineError("Division by zero");
+    }
+    // Java-style integer division (toward zero), not Math.floor (toward −∞).
+    this.STACK[this.TOP - 1] = Math.trunc(a / b);
     this.TOP = this.TOP - 1;
     this.PC = this.PC + 1;
   }
@@ -380,9 +391,12 @@ export function parseInstructions(instructionStrings: { code: string; label?: st
     const code = instr.code.trim();
     const parts = code.split(/\s+/);
     const opcodeName = parts[0];
-    
-    const opcode = opcodeMap[opcodeName] ?? Opcode.NOP;
-    
+
+    const opcode = opcodeMap[opcodeName];
+    if (opcode === undefined) {
+      throw new MachineError(`Unknown opcode: ${opcodeName}`);
+    }
+
     return {
       opcode,
       arg1: resolveValue(parts[1]),

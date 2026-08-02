@@ -7,7 +7,7 @@ import { StackVisualization } from "@/components/StackVisualization";
 import { CompilerControls } from "@/components/CompilerControls";
 import { CfgDialog } from "@/components/cfg/CfgDialog";
 import { compileTripla } from "@/lib/tripla";
-import { AbstractMachine, parseInstructions, MachineState } from "@/lib/tripla/abstractMachine";
+import { AbstractMachine, parseInstructions, MachineState, MachineError } from "@/lib/tripla/abstractMachine";
 import { decodeCode } from "@/lib/workspaceLink";
 
 const SAMPLE_TRIPLA_CODE = `// Tripla Example: Factorial
@@ -81,18 +81,27 @@ const Index = () => {
     if (isRunning && machineRef.current && !machineState.halted) {
       runIntervalRef.current = window.setInterval(() => {
         if (machineRef.current && !machineRef.current.isHalted()) {
-          const currentState = machineRef.current.getState();
-          setStateHistory((prev) => [...prev, currentState]);
+          try {
+            const currentState = machineRef.current.getState();
+            setStateHistory((prev) => [...prev, currentState]);
 
-          const newState = machineRef.current.step();
-          setMachineState(newState);
+            const newState = machineRef.current.step();
+            setMachineState(newState);
 
-          if (newState.halted) {
+            if (newState.halted) {
+              setIsRunning(false);
+              if (runIntervalRef.current) {
+                clearInterval(runIntervalRef.current);
+                runIntervalRef.current = null;
+              }
+            }
+          } catch (e) {
             setIsRunning(false);
             if (runIntervalRef.current) {
               clearInterval(runIntervalRef.current);
               runIntervalRef.current = null;
             }
+            setError(e instanceof MachineError || e instanceof Error ? e.message : "Runtime error");
           }
         }
       }, 1000);
@@ -115,13 +124,22 @@ const Index = () => {
     const result = compileTripla(code);
 
     if (result.success) {
-      setInstructions(result.instructionStrings);
-      setIsCompiled(true);
-      setStateHistory([]);
+      try {
+        setInstructions(result.instructionStrings);
+        setIsCompiled(true);
+        setStateHistory([]);
 
-      const machineInstructions = parseInstructions(result.instructionStrings);
-      machineRef.current = new AbstractMachine(machineInstructions);
-      setMachineState(machineRef.current.getState());
+        const machineInstructions = parseInstructions(result.instructionStrings);
+        machineRef.current = new AbstractMachine(machineInstructions);
+        setMachineState(machineRef.current.getState());
+      } catch (e) {
+        setError(e instanceof MachineError || e instanceof Error ? e.message : "Failed to load instructions");
+        setIsCompiled(false);
+        setInstructions([]);
+        machineRef.current = null;
+        setMachineState(initialMachineState);
+        setStateHistory([]);
+      }
     } else {
       setError(result.error || "Unknown compilation error");
       setIsCompiled(false);
@@ -135,11 +153,15 @@ const Index = () => {
   const handleStep = () => {
     setWarning(null);
     if (machineRef.current && !machineRef.current.isHalted()) {
-      const currentState = machineRef.current.getState();
-      setStateHistory((prev) => [...prev, currentState]);
+      try {
+        const currentState = machineRef.current.getState();
+        setStateHistory((prev) => [...prev, currentState]);
 
-      const newState = machineRef.current.step();
-      setMachineState(newState);
+        const newState = machineRef.current.step();
+        setMachineState(newState);
+      } catch (e) {
+        setError(e instanceof MachineError || e instanceof Error ? e.message : "Runtime error");
+      }
     }
   };
 
@@ -173,10 +195,14 @@ const Index = () => {
     const MAX_STEP_BACK = 2_000;
     const collected: MachineState[] = [];
     let steps = 0;
-    while (!machine.isHalted() && steps < MAX_RUN_TO_END_STEPS) {
-      collected.push(machine.getState());
-      machine.step();
-      steps += 1;
+    try {
+      while (!machine.isHalted() && steps < MAX_RUN_TO_END_STEPS) {
+        collected.push(machine.getState());
+        machine.step();
+        steps += 1;
+      }
+    } catch (e) {
+      setError(e instanceof MachineError || e instanceof Error ? e.message : "Runtime error");
     }
     const kept =
       collected.length > MAX_STEP_BACK ? collected.slice(-MAX_STEP_BACK) : collected;
@@ -187,7 +213,7 @@ const Index = () => {
     });
     setMachineState(machine.getState());
 
-    if (!machine.isHalted()) {
+    if (!machine.isHalted() && steps >= MAX_RUN_TO_END_STEPS) {
       setWarning(`Stopped after ${MAX_RUN_TO_END_STEPS.toLocaleString()} steps — possible infinite loop.`);
     }
   };

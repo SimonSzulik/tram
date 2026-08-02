@@ -178,7 +178,7 @@ export class Parser {
     // IF expression: if B then E else E
     if (this.match(TokenType.IF)) {
       this.advance();
-      const cond = this.parseExpression();
+      const cond = this.parseBoolean();
       this.expect(TokenType.THEN, 'Expected "then" after condition');
       const thenBranch = this.parseExpression();
       this.expect(TokenType.ELSE, 'Expected "else" after then branch');
@@ -189,7 +189,7 @@ export class Parser {
     // WHILE expression: while B do { E }
     if (this.match(TokenType.WHILE)) {
       this.advance();
-      const cond = this.parseExpression();
+      const cond = this.parseBoolean();
       this.expect(TokenType.DO, 'Expected "do" after while condition');
       this.expect(TokenType.LB, 'Expected "{" after do');
       const body = this.parseExpression();
@@ -262,38 +262,81 @@ export class Parser {
     return decls;
   }
   
-  // Parse parameters: V → ID | V , V
+  // Parse parameters: V → ID | V , V  (at least one)
   private parseParameters(): VARNode[] {
-    const params: VARNode[] = [];
-    
-    if (this.match(TokenType.ID)) {
-      params.push(AST.var(this.advance().value as string));
-      
-      while (this.match(TokenType.COMMA)) {
-        this.advance();
-        if (!this.match(TokenType.ID)) {
-          throw new ParserError('Expected parameter name after comma', this.current());
-        }
-        params.push(AST.var(this.advance().value as string));
-      }
+    if (!this.match(TokenType.ID)) {
+      throw new ParserError('Expected at least one parameter', this.current());
     }
-    
+
+    const params: VARNode[] = [AST.var(this.advance().value as string)];
+
+    while (this.match(TokenType.COMMA)) {
+      this.advance();
+      if (!this.match(TokenType.ID)) {
+        throw new ParserError('Expected parameter name after comma', this.current());
+      }
+      params.push(AST.var(this.advance().value as string));
+    }
+
     return params;
   }
-  
-  // Parse arguments: A → E | A , E
+
+  // Parse arguments: A → E | A , E  (at least one)
   private parseArguments(): ASTNode[] {
-    const args: ASTNode[] = [];
-    
-    if (!this.match(TokenType.RP)) {
-      args.push(this.parseExpression());
-      
-      while (this.match(TokenType.COMMA)) {
-        this.advance();
-        args.push(this.parseExpression());
-      }
+    if (this.match(TokenType.RP)) {
+      throw new ParserError('Expected at least one argument', this.current());
     }
-    
+
+    const args: ASTNode[] = [this.parseExpression()];
+
+    while (this.match(TokenType.COMMA)) {
+      this.advance();
+      args.push(this.parseExpression());
+    }
+
     return args;
+  }
+
+  // B → TRUE | FALSE | ( B ) | B && B | B || B | E relop E
+  private parseBoolean(): ASTNode {
+    let left = this.parseBooleanAtom();
+
+    while (this.match(TokenType.AND, TokenType.OR)) {
+      const op = this.advance().value as string;
+      const right = this.parseBooleanAtom();
+      left = AST.binop(op, left, right);
+    }
+
+    return left;
+  }
+
+  private parseBooleanAtom(): ASTNode {
+    if (this.match(TokenType.TRUE)) {
+      this.advance();
+      return AST.bool(true);
+    }
+    if (this.match(TokenType.FALSE)) {
+      this.advance();
+      return AST.bool(false);
+    }
+
+    if (this.match(TokenType.LP)) {
+      this.advance();
+      const inner = this.parseBoolean();
+      this.expect(TokenType.RP, 'Expected ")" after boolean expression');
+      return inner;
+    }
+
+    // Comparison: E relop E (E without boolean/comparison ops — additive level)
+    const left = this.parseAdditive();
+    if (!this.match(TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE)) {
+      throw new ParserError(
+        'Expected a boolean condition (comparison, true/false, or &&/||)',
+        this.current()
+      );
+    }
+    const op = this.advance().value as string;
+    const right = this.parseAdditive();
+    return AST.binop(op, left, right);
   }
 }

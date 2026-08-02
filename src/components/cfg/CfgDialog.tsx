@@ -83,7 +83,7 @@ export const CfgDialog = ({
 
         <p className="text-xs text-muted-foreground">
           {mode === "compact"
-            ? "Compact view — expression chains collapsed to statements, conditions folded into decisions."
+            ? "Compact view — empty control-flow placeholders removed, conditions folded into decisions."
             : "Faithful view — every sub-expression is its own node, exactly as the CFG is built."}{" "}
           Diamonds branch <span className="font-semibold text-stack-push">T</span>rue /{" "}
           <span className="font-semibold text-destructive">F</span>alse; dashed edges are loop back-edges.

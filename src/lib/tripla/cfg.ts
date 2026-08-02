@@ -201,10 +201,11 @@ class CfgBuilder {
         if (end) this.link(cont, end);
         const ret = this.node("return", ast, `RET ${ast.name}`);
         const reg = this.registry.get(ast.name);
-        if (reg) {
-          this.link(reg.end, ret);
-          this.link(call, reg.start);
+        if (!reg) {
+          throw new Error(`Call to undefined function '${ast.name}'`);
         }
+        this.link(reg.end, ret);
+        this.link(call, reg.start);
         this.link(ret, cont);
         this.link(call, ret);
         return cont;
@@ -355,8 +356,8 @@ export function buildCfg(ast: ASTNode): CfgGraph {
 }
 
 /**
- * Derive a readable statement-level graph: collapse linear stmt→stmt chains
- * into their final statement, and fold a condition box into its diamond.
+ * Derive a readable statement-level graph: drop empty IF/WHILE placeholder
+ * stmts, and fold a condition box into its diamond.
  */
 export function toCompact(graph: CfgGraph): CfgGraph {
   const nodes = new Map<number, CfgNode>(graph.nodes.map((n) => [n.id, { ...n }]));
@@ -376,7 +377,8 @@ export function toCompact(graph: CfgGraph): CfgGraph {
     edges = [...seen.values()];
   };
 
-  // (a) Collapse a pure pass-through stmt `a` (a→b only, b←a only) into `b`.
+  // (a) Collapse empty pass-through stmt placeholders (IF/WHILE entry/merge
+  // boxes with no label) into their successor. Real statements keep their nodes.
   let changed = true;
   while (changed) {
     changed = false;
@@ -385,6 +387,7 @@ export function toCompact(graph: CfgGraph): CfgGraph {
       const a = nodes.get(e.from);
       const b = nodes.get(e.to);
       if (!a || !b || a.kind !== "stmt" || b.kind !== "stmt") continue;
+      if (a.label !== "") continue; // only empty structural placeholders
       if (outEdges(a.id).length !== 1 || inEdges(b.id).length !== 1) continue;
       // Re-point a's predecessors to b, drop a and the a→b edge.
       for (const pe of inEdges(a.id)) pe.to = b.id;
