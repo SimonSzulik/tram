@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight, Lightbulb } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, ArrowDown, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PHASES, type Phase } from "@/content/concepts";
 import { CodeSample } from "@/components/learn";
@@ -11,12 +11,28 @@ import {
 } from "@/components/ui/carousel";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Accent → bullet color. Written out so Tailwind's scanner actually emits these
+// classes (a `text-` → `bg-` string replace produces names it never sees).
+const DOT_CLASS: Record<string, string> = {
+  "text-sky-500": "bg-sky-500",
+  "text-primary": "bg-primary",
+  "text-violet-500": "bg-violet-500",
+  "text-cyan-500": "bg-cyan-500",
+  "text-amber-500": "bg-amber-500",
+  "text-emerald-500": "bg-emerald-500",
+};
+
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
+);
+
 const PhaseCard = ({ phase }: { phase: Phase }) => {
   const Icon = phase.icon;
   const isFrontend = phase.side === "frontend";
+  const dot = DOT_CLASS[phase.accent] ?? "bg-muted-foreground";
 
   return (
-    <div className="relative flex h-full min-h-[26rem] flex-col rounded-2xl border border-border bg-card/60 p-5 sm:p-6">
+    <div className="relative flex h-full min-h-[19rem] flex-col rounded-2xl border border-border bg-card/60 p-5 sm:p-6">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -52,34 +68,33 @@ const PhaseCard = ({ phase }: { phase: Phase }) => {
         </div>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{phase.description}</p>
+      <p className="mt-3 max-w-4xl text-sm leading-relaxed text-muted-foreground">{phase.description}</p>
 
-      <div className="mt-auto grid gap-3 pt-4 lg:grid-cols-2">
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">In</p>
-          <CodeSample code={phase.example.input} lang="text" copy={false} className="my-0" />
-          <p className="mb-1 mt-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Out
-          </p>
-          <CodeSample code={phase.example.output} lang="text" copy={false} className="my-0" />
-        </div>
-        <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            What it does
-          </p>
-          <ul className="space-y-1">
+      {/* Two balanced columns that absorb the leftover height instead of leaving
+          one dead gap: the checklist fills the left, the worked example the right. */}
+      <div className="mt-5 grid flex-1 gap-4 lg:grid-cols-[1fr_1.05fr] lg:gap-6">
+        <div className="flex min-w-0 flex-col">
+          <SectionLabel>What it does</SectionLabel>
+          <ul className="grid flex-1 content-start gap-x-5 gap-y-2 sm:grid-cols-2 lg:grid-cols-1">
             {phase.keyPoints.map((k, i) => (
-              <li key={i} className="flex gap-2 text-sm text-foreground/90">
-                <span
-                  className={cn(
-                    "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                    phase.accent.replace("text-", "bg-")
-                  )}
-                />
+              <li key={i} className="flex gap-2 text-sm leading-snug text-foreground/90">
+                <span className={cn("mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
                 <span>{k}</span>
               </li>
             ))}
           </ul>
+        </div>
+
+        <div className="flex min-w-0 flex-col rounded-xl border border-border/70 bg-muted/25 p-3 sm:p-4">
+          <SectionLabel>Example</SectionLabel>
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+            <CodeSample code={phase.example.input} lang="text" copy={false} className="my-0" />
+            <div className="flex items-center gap-1.5 py-0.5 pl-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <ArrowDown className={cn("h-3.5 w-3.5", phase.accent)} />
+              becomes
+            </div>
+            <CodeSample code={phase.example.output} lang="text" copy={false} className="my-0" />
+          </div>
         </div>
       </div>
     </div>

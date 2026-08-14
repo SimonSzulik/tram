@@ -212,12 +212,19 @@ export const CfgGraph = ({ graph }: { graph: Graph }) => {
   }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
-    (e.target as Element).setPointerCapture?.(e.pointerId);
+    // Capture on the pane, not on e.target: node/edge elements are replaced on
+    // every re-render, and a removed target silently drops the capture.
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     drag.current = { x: e.clientX, y: e.clientY, tx: t.x, ty: t.y };
   };
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current) return;
-    setT((prev) => ({ ...prev, x: drag.current!.tx + (e.clientX - drag.current!.x), y: drag.current!.ty + (e.clientY - drag.current!.y) }));
+    const d = drag.current;
+    if (!d) return;
+    // Resolve the drag origin here — the updater below may run after the
+    // pointer is released, when `drag.current` is already null.
+    const x = d.tx + (e.clientX - d.x);
+    const y = d.ty + (e.clientY - d.y);
+    setT((prev) => ({ ...prev, x, y }));
   };
   const onPointerUp = () => {
     drag.current = null;
@@ -243,6 +250,7 @@ export const CfgGraph = ({ graph }: { graph: Graph }) => {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={onPointerUp}
       >
         <svg ref={svgRef} width="100%" height="100%">
