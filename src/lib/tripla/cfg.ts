@@ -4,8 +4,7 @@
 // The builder produces a fine-grained CFG (every sub-expression is its own node),
 // splices out the structural placeholder ("empty") nodes, keeps only nodes
 // reachable from the global START, and labels diamond out-edges T/F by the
-// creation order of their targets. `toCompact` derives a readable statement-level
-// view from the faithful graph.
+// creation order of their targets.
 
 import type { ASTNode, BINOPNode } from "./ast";
 
@@ -79,6 +78,9 @@ const isEmpty = (n: N): boolean =>
   (n.label === null || n.label === "None") && n.ast === null;
 
 function displayLabel(n: N): string {
+  // A diamond carries the placeholder "<?>" as its label and the condition as
+  // its AST — show the condition, otherwise every decision reads "<?>".
+  if (n.kind === "diamond" && n.ast) return nodeStr(n.ast);
   if (n.label !== null && n.label !== "None") return n.label;
   if (n.ast) return nodeStr(n.ast);
   return "";
@@ -353,74 +355,4 @@ export function buildCfg(ast: ASTNode): CfgGraph {
   const builder = new CfgBuilder();
   const { start } = builder.build(ast);
   return emit(start);
-}
-
-/**
- * Derive a readable statement-level graph: drop empty IF/WHILE placeholder
- * stmts, and fold a condition box into its diamond.
- */
-export function toCompact(graph: CfgGraph): CfgGraph {
-  const nodes = new Map<number, CfgNode>(graph.nodes.map((n) => [n.id, { ...n }]));
-  let edges: CfgEdge[] = graph.edges.map((e) => ({ ...e }));
-
-  const outEdges = (id: number) => edges.filter((e) => e.from === id);
-  const inEdges = (id: number) => edges.filter((e) => e.to === id);
-
-  const dedupe = () => {
-    const seen = new Map<string, CfgEdge>();
-    for (const e of edges) {
-      const key = `${e.from}->${e.to}`;
-      const prev = seen.get(key);
-      if (!prev) seen.set(key, e);
-      else if (e.label && !prev.label) prev.label = e.label; // keep a T/F label if any
-    }
-    edges = [...seen.values()];
-  };
-
-  // (a) Collapse empty pass-through stmt placeholders (IF/WHILE entry/merge
-  // boxes with no label) into their successor. Real statements keep their nodes.
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const e of edges) {
-      if (e.back) continue;
-      const a = nodes.get(e.from);
-      const b = nodes.get(e.to);
-      if (!a || !b || a.kind !== "stmt" || b.kind !== "stmt") continue;
-      if (a.label !== "") continue; // only empty structural placeholders
-      if (outEdges(a.id).length !== 1 || inEdges(b.id).length !== 1) continue;
-      // Re-point a's predecessors to b, drop a and the a→b edge.
-      for (const pe of inEdges(a.id)) pe.to = b.id;
-      edges = edges.filter((x) => x !== e);
-      nodes.delete(a.id);
-      dedupe();
-      changed = true;
-      break;
-    }
-  }
-
-  // (b) Fold a condition box that flows solely into a diamond into that diamond.
-  changed = true;
-  while (changed) {
-    changed = false;
-    for (const e of edges) {
-      if (e.back) continue;
-      const a = nodes.get(e.from);
-      const d = nodes.get(e.to);
-      if (!a || !d || a.kind !== "stmt" || d.kind !== "diamond") continue;
-      if (d.label !== "<?>") continue; // only fold the condition once
-      if (outEdges(a.id).length !== 1) continue;
-      d.label = a.label;
-      for (const pe of inEdges(a.id)) pe.to = d.id;
-      edges = edges.filter((x) => x !== e);
-      nodes.delete(a.id);
-      dedupe();
-      changed = true;
-      break;
-    }
-  }
-
-  const outNodes = [...nodes.values()];
-  markBackEdges(outNodes, edges);
-  return { nodes: outNodes, edges };
 }

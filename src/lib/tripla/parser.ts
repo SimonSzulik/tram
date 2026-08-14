@@ -182,7 +182,9 @@ export class Parser {
       this.expect(TokenType.THEN, 'Expected "then" after condition');
       const thenBranch = this.parseExpression();
       this.expect(TokenType.ELSE, 'Expected "else" after then branch');
-      const elseBranch = this.parseExpression();
+      // The else branch stops at a top-level ';': the precedence table binds
+      // "else" tighter than ";", so "if b then x else y ; z" is "(if …) ; z".
+      const elseBranch = this.parseAssignment();
       return AST.if(cond, thenBranch, elseBranch);
     }
     
@@ -298,10 +300,24 @@ export class Parser {
   }
 
   // B → TRUE | FALSE | ( B ) | B && B | B || B | E relop E
+  // "&&" binds tighter than "||", matching the precedence table and the way
+  // parseOr/parseAnd handle the same operators outside a condition.
   private parseBoolean(): ASTNode {
+    let left = this.parseBooleanAnd();
+
+    while (this.match(TokenType.OR)) {
+      const op = this.advance().value as string;
+      const right = this.parseBooleanAnd();
+      left = AST.binop(op, left, right);
+    }
+
+    return left;
+  }
+
+  private parseBooleanAnd(): ASTNode {
     let left = this.parseBooleanAtom();
 
-    while (this.match(TokenType.AND, TokenType.OR)) {
+    while (this.match(TokenType.AND)) {
       const op = this.advance().value as string;
       const right = this.parseBooleanAtom();
       left = AST.binop(op, left, right);
@@ -309,6 +325,15 @@ export class Parser {
 
     return left;
   }
+
+  private static readonly RELOPS = [
+    TokenType.EQ,
+    TokenType.NEQ,
+    TokenType.LT,
+    TokenType.GT,
+    TokenType.LTE,
+    TokenType.GTE,
+  ];
 
   private parseBooleanAtom(): ASTNode {
     if (this.match(TokenType.TRUE)) {
@@ -321,15 +346,24 @@ export class Parser {
     }
 
     if (this.match(TokenType.LP)) {
-      this.advance();
-      const inner = this.parseBoolean();
-      this.expect(TokenType.RP, 'Expected ")" after boolean expression');
-      return inner;
+      // "(" starts either a grouped boolean "( B )" or an expression that opens
+      // a comparison, as in "(a + 1) > 2". Try the boolean reading first and
+      // rewind if it doesn't stand on its own.
+      const start = this.pos;
+      try {
+        this.advance();
+        const inner = this.parseBoolean();
+        this.expect(TokenType.RP, 'Expected ")" after boolean expression');
+        if (!this.match(...Parser.RELOPS)) return inner;
+      } catch {
+        /* not a grouped boolean — fall through to the comparison reading */
+      }
+      this.pos = start;
     }
 
     // Comparison: E relop E (E without boolean/comparison ops — additive level)
     const left = this.parseAdditive();
-    if (!this.match(TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE)) {
+    if (!this.match(...Parser.RELOPS)) {
       throw new ParserError(
         'Expected a boolean condition (comparison, true/false, or &&/||)',
         this.current()

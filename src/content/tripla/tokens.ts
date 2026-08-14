@@ -29,8 +29,8 @@ export const TOKEN_GROUPS: TokenGroup[] = [
   {
     title: "Identifiers & literals",
     rows: [
-      { token: "ID", lexeme: "[A-Za-z_][A-Za-z0-9_]*", note: "variable / function names" },
-      { token: "CONST", lexeme: "0 | [1-9][0-9]*", note: "non-negative integer literal" },
+      { token: "ID", lexeme: "[A-Za-z_][A-Za-z0-9_]*", note: "variable / function names — keywords are lower-case only, so If or Do are valid names" },
+      { token: "CONST", lexeme: "[0-9]+", note: "non-negative integer literal; leading zeros are accepted" },
     ],
   },
   {

@@ -103,11 +103,12 @@ export class Lexer {
       value += this.advance();
     }
 
-    const tokenType = RESERVED_WORDS[value.toLowerCase()] || TokenType.ID;
+    // Keywords are lower-case only, so "If" or "Do" stay usable as names.
+    const tokenType = RESERVED_WORDS[value] || TokenType.ID;
 
     return {
       type: tokenType,
-      value: tokenType === TokenType.ID ? value : value.toLowerCase(),
+      value,
       line: startLine,
       column: startColumn,
     };

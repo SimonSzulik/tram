@@ -19,8 +19,7 @@ import {
   Instruction, 
   Label, 
   instructions as instr,
-  attachEntryLabel,
-  cloneInstructions
+  attachEntryLabel
 } from './instructions';
 
 // Environment: maps variable names to (label/offset, nesting level)
@@ -216,30 +215,14 @@ export class Compiler {
       ];
     }
     
-    // Less than or equal, greater than or equal
+    // Less than or equal, greater than or equal: a <= b is not (a > b), and
+    // a >= b is not (a < b). Negating the strict comparison keeps both operands
+    // to a single evaluation — testing "a < b else a == b" instead would run
+    // them twice, so a side-effecting operand (a call, an assignment) would
+    // happen twice too.
     if (node.op === '<=' || node.op === '>=') {
-      const lEqCheck = new Label();
-      const lEnd = new Label();
-      
-      const argsOnce = [...left, ...right];
-      const argsTwice = cloneInstructions(argsOnce);
-      attachEntryLabel(argsTwice, lEqCheck);
-      
-      const firstCmp = node.op === '<=' ? instr.lt() : instr.gt();
-      
-      const nopEnd = instr.nop();
-      nopEnd.assignedLabels.push(lEnd);
-      
-      return [
-        ...argsOnce,
-        firstCmp,
-        instr.ifzero(lEqCheck),
-        instr.const(1),
-        instr.goto(lEnd),
-        ...argsTwice,
-        instr.eq(),
-        nopEnd,
-      ];
+      const strict = node.op === '<=' ? instr.gt() : instr.lt();
+      return [...left, ...right, strict, instr.const(0), instr.eq()];
     }
     
     throw new CompilerError(`Unknown operator: ${node.op}`);
@@ -304,10 +287,16 @@ export class Compiler {
     
     const condCode = this.generateCode(node.cond, env, nl);
     const bodyCode = this.generateCode(node.body, env, nl);
-    
+
     attachEntryLabel(bodyCode, l4);
-    
-    const condLabeled = cloneInstructions(condCode);
+
+    // The loop needs a second copy of the condition. Re-generate it instead of
+    // cloning: a clone reuses the very same Label objects, so a condition that
+    // emits labels of its own (<=, >=, && , ||) would define each label twice.
+    // The assembler keeps one address per name, and the pre-test copy's jumps
+    // then land inside the loop copy — skipping into the loop's POP, which eats
+    // a slot of the caller's frame.
+    const condLabeled = this.generateCode(node.cond, env, nl);
     attachEntryLabel(condLabeled, l1);
     
     const constZero = instr.const(0);

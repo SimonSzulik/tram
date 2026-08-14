@@ -77,7 +77,7 @@ export const WIKI: WikiEntry[] = [
       "Repeats the body E as long as the boolean condition B holds. Like everything in TRIPLA it is an expression; it is normally used for its side effects on variables.",
     example: "let countdown(n) { while (n > 0) do { n = n - 1 }; n } in countdown(5)",
     compilesTo:
-      "Ltest: code(B); IFZERO Lend; code(E); POP; GOTO Ltest; Lend: — test at the top, jump back after the body.",
+      "code(B); IFZERO Lzero; GOTO Lbody; Ltest: code(B); IFZERO Lend; POP; Lbody: code(E); GOTO Ltest; Lzero: CONST 0; Lend: — the condition is tested once before the loop and again after every pass, and the POP drops the previous round's value so only the last one survives. A loop that never runs yields the CONST 0.",
   },
   {
     id: "assignment",
@@ -122,7 +122,7 @@ export const WIKI: WikiEntry[] = [
       "Compare two expressions, producing a boolean usable in a condition. Internally the result is 1 (true) or 0 (false).",
     example: "let f(x) { if (x == 42) then 1 else 0 } in f(42)",
     compilesTo:
-      "LT/GT/EQ/NEQ map to single instructions; <= and >= are synthesized from the others (e.g. a <= b as not (a > b)).",
+      "LT/GT/EQ/NEQ map to single instructions; <= and >= are synthesized by negating the strict comparison — a <= b compiles to GT; CONST 0; EQ, i.e. not (a > b).",
   },
   {
     id: "boolean",

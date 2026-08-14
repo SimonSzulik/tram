@@ -1,18 +1,22 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AlertTriangle, Workflow } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { Lexer } from "@/lib/tripla/lexer";
 import { Parser } from "@/lib/tripla/parser";
-import { buildCfg, toCompact, type CfgGraph } from "@/lib/tripla/cfg";
+import { buildCfg, type CfgGraph } from "@/lib/tripla/cfg";
 import { CfgGraph as CfgGraphView } from "./CfgGraph";
-
-type Mode = "compact" | "faithful";
 
 interface Built {
   graph: CfgGraph | null;
   error: string | null;
 }
+
+const errorMessage = (e: unknown): string => {
+  // A deeply nested expression exhausts the recursive AST walk before it can
+  // produce a graph — say so instead of leaking "Maximum call stack size".
+  if (e instanceof RangeError) return "The program nests too deeply to graph.";
+  return e instanceof Error ? e.message : "Could not parse the program.";
+};
 
 export const CfgDialog = ({
   open,
@@ -23,18 +27,15 @@ export const CfgDialog = ({
   onOpenChange: (open: boolean) => void;
   code: string;
 }) => {
-  const [mode, setMode] = useState<Mode>("compact");
-
   const { graph, error }: Built = useMemo(() => {
     if (!open) return { graph: null, error: null };
     try {
       const ast = new Parser(new Lexer(code).tokenize()).parse();
-      const faithful = buildCfg(ast);
-      return { graph: mode === "compact" ? toCompact(faithful) : faithful, error: null };
+      return { graph: buildCfg(ast), error: null };
     } catch (e) {
-      return { graph: null, error: e instanceof Error ? e.message : "Could not parse the program." };
+      return { graph: null, error: errorMessage(e) };
     }
-  }, [open, code, mode]);
+  }, [open, code]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,23 +45,6 @@ export const CfgDialog = ({
             <Workflow className="h-5 w-5 text-primary" />
             Control Flow Graph
           </DialogTitle>
-
-          {/* Compact ⇄ Faithful toggle */}
-          <div className="flex rounded-lg border border-border p-0.5">
-            {(["compact", "faithful"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={cn(
-                  "rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors",
-                  mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
         </DialogHeader>
 
         <div className="min-h-0 flex-1">
@@ -80,14 +64,6 @@ export const CfgDialog = ({
             </div>
           )}
         </div>
-
-        <p className="text-xs text-muted-foreground">
-          {mode === "compact"
-            ? "Compact view — empty control-flow placeholders removed, conditions folded into decisions."
-            : "Faithful view — every sub-expression is its own node, exactly as the CFG is built."}{" "}
-          Diamonds branch <span className="font-semibold text-stack-push">T</span>rue /{" "}
-          <span className="font-semibold text-destructive">F</span>alse; dashed edges are loop back-edges.
-        </p>
       </DialogContent>
     </Dialog>
   );
